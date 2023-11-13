@@ -185,19 +185,19 @@ class GameObject {
     this.setY(y);
   }
 
-  right(px) {
+  right(px = 2) {
     return this.setX(this.x + px);
   }
 
-  left(px) {
+  left(px = 2) {
     return this.setX(this.x - px);
   }
 
-  up(px) {
+  up(px = 2) {
     return this.setY(this.y - px);
   }
 
-  down(px) {
+  down(px = 2) {
     return this.setY(this.y + px);
   }
 }
@@ -228,9 +228,12 @@ class Spam {
     this.callback = callback;
     this.delay = delay;
     this.id = null;
+    this.spam = false;
   }
 
   start(stopAfter = null) {
+    if (this.spam) return;
+    this.spam = true;
     this.id = setInterval(this.callback, this.delay);
 
     if (stopAfter) {
@@ -241,6 +244,7 @@ class Spam {
   }
 
   stop() {
+    this.spam = false;
     clearInterval(this.id);
   }
 }
@@ -259,29 +263,58 @@ class Spam {
   char1.setXY(100, 100);
   char2.setXY(200, 350);
 
-  const pressWToMoveUp = new KeyDownEvent("w", () => {
-    char1.setY(char1.y - 10);
-  });
+  const char1MoveRightSpam = new Spam(() => {
+    char1.right();
+  }, 10);
 
-  const pressSToMoveDown = new KeyDownEvent("s", () => {
-    char1.setY(char1.y + 10);
-  });
+  const char1MoveBottomSpam = new Spam(() => {
+    char1.down();
+  }, 10);
 
-  const pressAToMoveLeft = new KeyDownEvent("a", () => {
-    char1.setX(char1.x - 10);
-  });
+  const char1MoveLeftSpam = new Spam(() => {
+    char1.left();
+  }, 10);
 
-  const pressDToMoveRight = new KeyDownEvent("d", () => {
-    char1.setX(char1.x + 10);
-  });
+  const char1MoveTopSpam = new Spam(() => {
+    char1.up();
+  }, 10);
+
+  const pressWToMoveUp = new KeyDownEvent("w", () => char1MoveTopSpam.start());
+  const pressSToMoveDown = new KeyDownEvent("s", () =>
+    char1MoveBottomSpam.start()
+  );
+  const pressAToMoveLeft = new KeyDownEvent("a", () =>
+    char1MoveLeftSpam.start()
+  );
+  const pressDToMoveRight = new KeyDownEvent("d", () =>
+    char1MoveRightSpam.start()
+  );
+
+  const unpressWToStopMovingUp = new KeyUpEvent("w", () =>
+    char1MoveTopSpam.stop()
+  );
+  const unpressSToStopMovingDown = new KeyUpEvent("s", () =>
+    char1MoveBottomSpam.stop()
+  );
+  const unpressAToStopMovingLeft = new KeyUpEvent("a", () =>
+    char1MoveLeftSpam.stop()
+  );
+  const unpressDToStopMovingRight = new KeyUpEvent("d", () =>
+    char1MoveRightSpam.stop()
+  );
 
   scene.keyboard.addEvent(pressWToMoveUp);
   scene.keyboard.addEvent(pressSToMoveDown);
   scene.keyboard.addEvent(pressAToMoveLeft);
   scene.keyboard.addEvent(pressDToMoveRight);
 
+  scene.keyboard.addEvent(unpressWToStopMovingUp);
+  scene.keyboard.addEvent(unpressSToStopMovingDown);
+  scene.keyboard.addEvent(unpressAToStopMovingLeft);
+  scene.keyboard.addEvent(unpressDToStopMovingRight);
+
   const moveRight = new Spam(() => {
-    char2.right(3);
+    char2.right();
   }, 10);
 
   moveRight.start(2000);
