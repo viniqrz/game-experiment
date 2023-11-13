@@ -48,6 +48,13 @@ class KeyDownEvent extends KeyboardEvent {
   }
 }
 
+class KeyUpEvent extends KeyboardEvent {
+  constructor(key, callback) {
+    super(callback, key, "keyup");
+    this.type = "keyup";
+  }
+}
+
 class MouseDownEvent extends MouseEvent {
   constructor(callback) {
     super(callback, "mousedown");
@@ -96,7 +103,7 @@ class KeyboardEventsList {
 
   init() {
     const KEYS = ["w", "s", "a", "d"];
-    const TYPES = [new KeyDownEvent().type];
+    const TYPES = [new KeyDownEvent().type, new KeyUpEvent().type];
 
     this.typesCallbacks = new Map();
 
@@ -109,6 +116,7 @@ class KeyboardEventsList {
 
     for (const [type, keys] of this.typesCallbacks) {
       this.parentNode.addEventListener(type, (e) => {
+        console.log(e.key);
         for (const [key, callbacks] of keys) {
           if (key === e.key) {
             for (const callback of callbacks) {
@@ -157,19 +165,40 @@ class Scene {
 class GameObject {
   constructor(html) {
     this.html = html;
+    this.x = 0;
+    this.y = 0;
   }
 
   setY(y) {
+    this.y = y;
     this.html.style.top = `${y}px`;
   }
 
   setX(x) {
+    this.x = x;
     this.html.style.left = `${x}px`;
   }
 
   setXY(x, y) {
+    console.log(this.html.style.left, this.html.style.top);
     this.setX(x);
     this.setY(y);
+  }
+
+  right(px) {
+    return this.setX(this.x + px);
+  }
+
+  left(px) {
+    return this.setX(this.x - px);
+  }
+
+  up(px) {
+    return this.setY(this.y - px);
+  }
+
+  down(px) {
+    return this.setY(this.y + px);
   }
 }
 
@@ -194,6 +223,28 @@ class Character extends GameObject {
   }
 }
 
+class Spam {
+  constructor(callback, delay) {
+    this.callback = callback;
+    this.delay = delay;
+    this.id = null;
+  }
+
+  start(stopAfter = null) {
+    this.id = setInterval(this.callback, this.delay);
+
+    if (stopAfter) {
+      setTimeout(() => {
+        this.stop();
+      }, stopAfter);
+    }
+  }
+
+  stop() {
+    clearInterval(this.id);
+  }
+}
+
 (function init() {
   const screen = new GameScreen();
   const char1 = new Character("Robert");
@@ -208,18 +259,34 @@ class Character extends GameObject {
   char1.setXY(100, 100);
   char2.setXY(200, 350);
 
-  const pressDToMoveRight = new KeyDownEvent("d", () => {
-    char1.sayHello();
-    console.log("Olá");
+  const pressWToMoveUp = new KeyDownEvent("w", () => {
+    char1.setY(char1.y - 10);
   });
 
+  const pressSToMoveDown = new KeyDownEvent("s", () => {
+    char1.setY(char1.y + 10);
+  });
+
+  const pressAToMoveLeft = new KeyDownEvent("a", () => {
+    char1.setX(char1.x - 10);
+  });
+
+  const pressDToMoveRight = new KeyDownEvent("d", () => {
+    char1.setX(char1.x + 10);
+  });
+
+  scene.keyboard.addEvent(pressWToMoveUp);
+  scene.keyboard.addEvent(pressSToMoveDown);
+  scene.keyboard.addEvent(pressAToMoveLeft);
   scene.keyboard.addEvent(pressDToMoveRight);
-  scene.keyboard.addEvent(pressDToMoveRight);
+
+  const moveRight = new Spam(() => {
+    char2.right(3);
+  }, 10);
+
+  moveRight.start(2000);
 
   const clickToGetHello = new MouseDownEvent(() => {
     char2.sayHello();
   });
-
-  scene.mouse.addEvent(clickToGetHello);
-  scene.mouse.addEvent(clickToGetHello);
 })();
