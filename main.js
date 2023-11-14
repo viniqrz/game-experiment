@@ -26,18 +26,28 @@ class GameScreen {
   }
 }
 
-class MouseEvent {
-  constructor(callback, type) {
+class GameEvent {
+  constructor(callback, type, active = true) {
     this.callback = callback;
     this.type = type;
+    this.active = active;
+  }
+
+  setActive(active) {
+    this.active = active;
   }
 }
 
-class KeyboardEvent {
+class MouseEvent extends GameEvent {
+  constructor(callback, type) {
+    super(callback, type);
+  }
+}
+
+class KeyboardEvent extends GameEvent {
   constructor(callback, key, type) {
-    this.callback = callback;
+    super(callback, type);
     this.key = key;
-    this.type = type;
   }
 }
 
@@ -117,10 +127,12 @@ class KeyboardEventsList {
     for (const [type, keys] of this.typesCallbacks) {
       this.parentNode.addEventListener(type, (e) => {
         console.log(e.key);
-        for (const [key, callbacks] of keys) {
+        for (const [key, events] of keys) {
           if (key === e.key) {
-            for (const callback of callbacks) {
-              callback(e);
+            for (const event of events) {
+              if (event.active) {
+                event.callback(e);
+              }
             }
           }
         }
@@ -134,7 +146,7 @@ class KeyboardEventsList {
 
   addEvent(event) {
     this.events.push(event);
-    this.typesCallbacks.get(event.type).get(event.key).push(event.callback);
+    this.typesCallbacks.get(event.type).get(event.key).push(event);
   }
 }
 
@@ -163,10 +175,28 @@ class Scene {
 }
 
 class GameObject {
-  constructor(html) {
+  constructor(scene, html, color = "cyan") {
     this.html = html;
     this.x = 0;
     this.y = 0;
+    this.z = 0;
+    this.mouse = new MouseEventsList(this.html);
+    this.html.style.backgroundColor = color;
+    this.scene = scene;
+    this.wsadControl = new WSADControl(this);
+  }
+
+  getWsadControl() {
+    return this.wsadControl;
+  }
+
+  setColor(color) {
+    console.log(color);
+    this.html.style.backgroundColor = color;
+  }
+
+  getColor() {
+    return this.html.style.backgroundColor;
   }
 
   setY(y) {
@@ -179,35 +209,53 @@ class GameObject {
     this.html.style.left = `${x}px`;
   }
 
+  setZ(z) {
+    this.z = z;
+    this.html.style.zIndex = z;
+  }
+
   setXY(x, y) {
-    console.log(this.html.style.left, this.html.style.top);
     this.setX(x);
     this.setY(y);
   }
 
+  setXYZ(x, y, z) {
+    this.setX(x);
+    this.setY(y);
+    this.setZ(z);
+  }
+
+  forward() {
+    this.setZ(this.z + 1);
+  }
+
+  backward() {
+    this.setZ(this.z - 1);
+  }
+
   right(px = 2) {
-    return this.setX(this.x + px);
+    this.setX(this.x + px);
   }
 
   left(px = 2) {
-    return this.setX(this.x - px);
+    this.setX(this.x - px);
   }
 
   up(px = 2) {
-    return this.setY(this.y - px);
+    this.setY(this.y - px);
   }
 
   down(px = 2) {
-    return this.setY(this.y + px);
+    this.setY(this.y + px);
   }
 }
 
 class Character extends GameObject {
-  constructor(name, age, items) {
+  constructor(scene, name, age, items) {
     const html = document.createElement("div");
     html.classList.add("character");
 
-    super(html);
+    super(scene, html);
 
     this.name = name;
     this.age = age;
@@ -220,6 +268,64 @@ class Character extends GameObject {
 
   getHtml() {
     return this.html;
+  }
+}
+
+class WSADControl {
+  constructor(object, active = false) {
+    this.active = active;
+    this.object = object;
+    this.events = [];
+
+    this.init();
+  }
+
+  init() {
+    const objectMoveTopSpam = new Spam(() => {
+      this.object.up();
+    }, 5);
+    const objectMoveBottomSpam = new Spam(() => {
+      this.object.down();
+    }, 5);
+    const objectMoveLeftSpam = new Spam(() => {
+      this.object.left();
+    }, 5);
+    const objectMoveRightSpam = new Spam(() => {
+      this.object.right();
+    }, 5);
+
+    this.events.push(new KeyDownEvent("w", () => objectMoveTopSpam.start()));
+    this.events.push(new KeyDownEvent("s", () => objectMoveBottomSpam.start()));
+    this.events.push(new KeyDownEvent("a", () => objectMoveLeftSpam.start()));
+    this.events.push(new KeyDownEvent("d", () => objectMoveRightSpam.start()));
+
+    this.events.push(new KeyUpEvent("w", () => objectMoveTopSpam.stop()));
+    this.events.push(new KeyUpEvent("s", () => objectMoveBottomSpam.stop()));
+    this.events.push(new KeyUpEvent("a", () => objectMoveLeftSpam.stop()));
+    this.events.push(new KeyUpEvent("d", () => objectMoveRightSpam.stop()));
+
+    for (const event of this.events) {
+      event.setActive(this.active);
+      this.object.scene.keyboard.addEvent(event);
+    }
+  }
+
+  getActive() {
+    return this.active;
+  }
+
+  setActive(active) {
+    this.active = active;
+
+    if (active) {
+      this.events.forEach((event) => {
+        event.active = true;
+      });
+    } else {
+      this.events.forEach((event) => {
+        event.active = false;
+      });
+    }
   }
 }
 
@@ -249,11 +355,17 @@ class Spam {
   }
 }
 
+const randomRGBColor = () => {
+  return ["blue", "limegreen", "tomato", "cyan", "lightblue"][
+    Math.round(Math.random() * 5)
+  ];
+};
+
 (function init() {
   const screen = new GameScreen();
-  const char1 = new Character("Robert");
-  const char2 = new Character("Jon");
   const scene = new Scene();
+  const char1 = new Character(scene, "Robert");
+  const char2 = new Character(scene, "Jon");
 
   screen.setScene(scene);
 
@@ -263,63 +375,19 @@ class Spam {
   char1.setXY(100, 100);
   char2.setXY(200, 350);
 
-  const char1MoveRightSpam = new Spam(() => {
-    char1.right();
-  }, 10);
+  const characters = [char1, char2];
 
-  const char1MoveBottomSpam = new Spam(() => {
-    char1.down();
-  }, 10);
+  characters.forEach((char) => {
+    const clickToGetHello = new MouseDownEvent(() => {
+      char.getWsadControl().setActive(!char.getWsadControl().getActive());
 
-  const char1MoveLeftSpam = new Spam(() => {
-    char1.left();
-  }, 10);
+      if (char.getWsadControl().getActive()) {
+        char.setColor("tomato");
+      } else {
+        char.setColor("cyan");
+      }
+    });
 
-  const char1MoveTopSpam = new Spam(() => {
-    char1.up();
-  }, 10);
-
-  const pressWToMoveUp = new KeyDownEvent("w", () => char1MoveTopSpam.start());
-  const pressSToMoveDown = new KeyDownEvent("s", () =>
-    char1MoveBottomSpam.start()
-  );
-  const pressAToMoveLeft = new KeyDownEvent("a", () =>
-    char1MoveLeftSpam.start()
-  );
-  const pressDToMoveRight = new KeyDownEvent("d", () =>
-    char1MoveRightSpam.start()
-  );
-
-  const unpressWToStopMovingUp = new KeyUpEvent("w", () =>
-    char1MoveTopSpam.stop()
-  );
-  const unpressSToStopMovingDown = new KeyUpEvent("s", () =>
-    char1MoveBottomSpam.stop()
-  );
-  const unpressAToStopMovingLeft = new KeyUpEvent("a", () =>
-    char1MoveLeftSpam.stop()
-  );
-  const unpressDToStopMovingRight = new KeyUpEvent("d", () =>
-    char1MoveRightSpam.stop()
-  );
-
-  scene.keyboard.addEvent(pressWToMoveUp);
-  scene.keyboard.addEvent(pressSToMoveDown);
-  scene.keyboard.addEvent(pressAToMoveLeft);
-  scene.keyboard.addEvent(pressDToMoveRight);
-
-  scene.keyboard.addEvent(unpressWToStopMovingUp);
-  scene.keyboard.addEvent(unpressSToStopMovingDown);
-  scene.keyboard.addEvent(unpressAToStopMovingLeft);
-  scene.keyboard.addEvent(unpressDToStopMovingRight);
-
-  const moveRight = new Spam(() => {
-    char2.right();
-  }, 10);
-
-  moveRight.start(2000);
-
-  const clickToGetHello = new MouseDownEvent(() => {
-    char2.sayHello();
+    char.mouse.addEvent(clickToGetHello);
   });
 })();
