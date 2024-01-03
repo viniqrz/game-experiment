@@ -172,6 +172,100 @@ class Scene {
   getObjects() {
     return this.objects;
   }
+
+  checkIfThereIsYAxisOverlap(objectA, objectB) {
+    const boundariesA = objectA.getBoundaries();
+    const boundariesB = objectB.getBoundaries();
+
+    const hasYUpperOverlap =
+      (boundariesA.top < boundariesB.bottom &&
+        boundariesA.bottom > boundariesB.bottom) ||
+      boundariesA.top === boundariesB.top;
+
+    const hasYLowerOverlap =
+      (boundariesA.bottom > boundariesB.top &&
+        boundariesA.top < boundariesB.top) ||
+      boundariesA.bottom === boundariesB.bottom;
+
+    return hasYUpperOverlap || hasYLowerOverlap;
+  }
+
+  checkIfThereIsXAxisOverlap(objectA, objectB) {
+    const boundariesA = objectA.getBoundaries();
+    const boundariesB = objectB.getBoundaries();
+
+    const hasXLeftOverlap =
+      (boundariesA.left < boundariesB.right &&
+        boundariesA.right > boundariesB.right) ||
+      boundariesA.left === boundariesB.left;
+
+    const hasXRightOverlap =
+      (boundariesA.right > boundariesB.left &&
+        boundariesA.left < boundariesB.left) ||
+      boundariesA.right === boundariesB.right;
+
+    return hasXLeftOverlap || hasXRightOverlap;
+  }
+
+  requestXUpdate(actor, isPositive) {
+    return this.requestCoordinateUpdate(actor, isPositive, "X");
+  }
+  requestYUpdate(actor, isPositive) {
+    return this.requestCoordinateUpdate(actor, isPositive, "Y");
+  }
+
+  requestCoordinateUpdate(actor, isPositive, type) {
+    if (!actor.collision) return true;
+
+    const objects = this.getObjects();
+
+    for (const object of objects) {
+      if (!object.collision) continue;
+      if (object.ID === actor.ID) continue;
+      if (object.z !== actor.z) continue;
+
+      const actorBoundaries = actor.getBoundaries();
+      const objectBoundaries = object.getBoundaries();
+
+      if (type === "X") {
+        const isThereYAxisOverlap = this.checkIfThereIsYAxisOverlap(
+          actor,
+          object
+        );
+        if (!isThereYAxisOverlap) return true;
+
+        if (isPositive) {
+          if (actorBoundaries.left > objectBoundaries.left) return true;
+
+          return !(actorBoundaries.right >= objectBoundaries.left);
+        } else {
+          if (actorBoundaries.right < objectBoundaries.right) return true;
+
+          return !(actorBoundaries.left <= objectBoundaries.right);
+        }
+      }
+
+      if (type === "Y") {
+        const isThereXAxisOverlap = this.checkIfThereIsXAxisOverlap(
+          actor,
+          object
+        );
+        if (!isThereXAxisOverlap) return true;
+
+        if (isPositive) {
+          if (actorBoundaries.top > objectBoundaries.top) return true;
+
+          return !(actorBoundaries.bottom >= objectBoundaries.top);
+        } else {
+          if (actorBoundaries.bottom < objectBoundaries.bottom) return true;
+
+          return !(actorBoundaries.top <= objectBoundaries.bottom);
+        }
+      }
+    }
+
+    return true;
+  }
 }
 
 class GameObject {
@@ -184,6 +278,26 @@ class GameObject {
     this.html.style.backgroundColor = color;
     this.scene = scene;
     this.wsadControl = new WSADControl(this);
+    this.collision = false;
+    this.ID = Math.random().toString().slice(2);
+  }
+
+  getBoundaries() {
+    const { left, right, top, bottom } = this.html.getBoundingClientRect();
+    return {
+      left,
+      right,
+      top,
+      bottom,
+    };
+  }
+
+  setCollision(val) {
+    this.collision = val;
+  }
+
+  getCollision() {
+    return this.collision;
   }
 
   getWsadControl() {
@@ -191,7 +305,6 @@ class GameObject {
   }
 
   setColor(color) {
-    console.log(color);
     this.html.style.backgroundColor = color;
   }
 
@@ -199,14 +312,22 @@ class GameObject {
     return this.html.style.backgroundColor;
   }
 
-  setY(y) {
-    this.y = y;
-    this.html.style.top = `${y}px`;
-  }
-
   setX(x) {
+    const isPositive = this.x < x;
+    const allowed = this.scene.requestXUpdate(this, isPositive);
+    if (!allowed) return;
+
     this.x = x;
     this.html.style.left = `${x}px`;
+  }
+
+  setY(y) {
+    const isPositive = this.y < y;
+    const allowed = this.scene.requestYUpdate(this, isPositive);
+    if (!allowed) return;
+
+    this.y = y;
+    this.html.style.top = `${y}px`;
   }
 
   setZ(z) {
@@ -283,16 +404,16 @@ class WSADControl {
   init() {
     const objectMoveTopSpam = new Spam(() => {
       this.object.up();
-    }, 5);
+    }, 2);
     const objectMoveBottomSpam = new Spam(() => {
       this.object.down();
-    }, 5);
+    }, 2);
     const objectMoveLeftSpam = new Spam(() => {
       this.object.left();
-    }, 5);
+    }, 2);
     const objectMoveRightSpam = new Spam(() => {
       this.object.right();
-    }, 5);
+    }, 2);
 
     this.events.push(new KeyDownEvent("w", () => objectMoveTopSpam.start()));
     this.events.push(new KeyDownEvent("s", () => objectMoveBottomSpam.start()));
@@ -374,6 +495,9 @@ const randomRGBColor = () => {
 
   char1.setXY(100, 100);
   char2.setXY(200, 350);
+
+  char1.setCollision(true);
+  char2.setCollision(true);
 
   const characters = [char1, char2];
 
