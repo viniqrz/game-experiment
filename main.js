@@ -100,6 +100,13 @@ class MouseLeaveEvent extends MouseEvent {
   }
 }
 
+class MouseClickEvent extends MouseEvent {
+  constructor(callback) {
+    super(callback, "click");
+    this.type = "click";
+  }
+}
+
 class MouseEventsList {
   constructor(parentNode) {
     this.parentNode = parentNode;
@@ -115,6 +122,7 @@ class MouseEventsList {
     this.typesCallbacks.set(new MouseUpEvent().type, []);
     this.typesCallbacks.set(new MouseEnterEvent().type, []);
     this.typesCallbacks.set(new MouseLeaveEvent().type, []);
+    this.typesCallbacks.set(new MouseClickEvent().type, []);
 
     for (const [type, callbacks] of this.typesCallbacks) {
       this.parentNode.addEventListener(type, (e) => {
@@ -324,14 +332,20 @@ class Scene {
 
 class GameObject {
   constructor(scene, html, color = "cyan") {
+    this.ID = Math.random().toString().slice(2);
+
     this.html = html;
+    this.scene = scene;
+
+    this.html.id = this.ID;
+    this.html.style.backgroundColor = color;
+    this.html.style.position = "absolute";
+
     this.x = 0;
     this.y = 0;
     this.z = 0;
-    this.mouse = new MouseEventsList(this.html);
-    this.html.style.backgroundColor = color;
 
-    this.scene = scene;
+    this.mouse = new MouseEventsList(this.html);
 
     this.wsadControl = new WSADControl(this);
     this.jumpYControl = new JumpYControl(this);
@@ -342,8 +356,6 @@ class GameObject {
 
     this.gravity = false;
     this.gravityIntensity = 0.5;
-
-    this.ID = Math.random().toString().slice(2);
   }
 
   getBoundaries() {
@@ -564,16 +576,6 @@ class DragAndDropControl extends Control {
   }
 
   init() {
-    const mouseDownEvent = new MouseDownEvent((e) => {
-      this.mouseDown = true;
-      document.body.style.cursor = "grabbing";
-    });
-
-    const mouseUpEvent = new MouseUpEvent((e) => {
-      this.mouseDown = false;
-      document.body.style.cursor = "grab";
-    });
-
     const mouseMoveEvent = new MouseMoveEvent((e) => {
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
@@ -586,6 +588,16 @@ class DragAndDropControl extends Control {
       const height = objectBoundaries.bottom - objectBoundaries.top;
 
       this.object.setXY(this.mouseX - width / 2, this.mouseY - height / 2);
+    });
+
+    const mouseDownEvent = new MouseDownEvent((e) => {
+      this.mouseDown = true;
+      document.body.style.cursor = "grabbing";
+    });
+
+    const mouseUpEvent = new MouseUpEvent((e) => {
+      this.mouseDown = false;
+      document.body.style.cursor = "default";
     });
 
     const mouseEnterEvent = new MouseEnterEvent((e) => {
