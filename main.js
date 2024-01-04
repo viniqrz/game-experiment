@@ -86,6 +86,20 @@ class MouseMoveEvent extends MouseEvent {
   }
 }
 
+class MouseEnterEvent extends MouseEvent {
+  constructor(callback) {
+    super(callback, "mouseenter");
+    this.type = "mouseenter";
+  }
+}
+
+class MouseLeaveEvent extends MouseEvent {
+  constructor(callback) {
+    super(callback, "mouseleave");
+    this.type = "mouseleave";
+  }
+}
+
 class MouseEventsList {
   constructor(parentNode) {
     this.parentNode = parentNode;
@@ -99,6 +113,8 @@ class MouseEventsList {
     this.typesCallbacks.set(new MouseDownEvent().type, []);
     this.typesCallbacks.set(new MouseMoveEvent().type, []);
     this.typesCallbacks.set(new MouseUpEvent().type, []);
+    this.typesCallbacks.set(new MouseEnterEvent().type, []);
+    this.typesCallbacks.set(new MouseLeaveEvent().type, []);
 
     for (const [type, callbacks] of this.typesCallbacks) {
       this.parentNode.addEventListener(type, (e) => {
@@ -549,12 +565,13 @@ class DragAndDropControl extends Control {
 
   init() {
     const mouseDownEvent = new MouseDownEvent((e) => {
-      console.log("mousedown");
       this.mouseDown = true;
+      document.body.style.cursor = "grabbing";
     });
 
     const mouseUpEvent = new MouseUpEvent((e) => {
       this.mouseDown = false;
+      document.body.style.cursor = "grab";
     });
 
     const mouseMoveEvent = new MouseMoveEvent((e) => {
@@ -571,6 +588,18 @@ class DragAndDropControl extends Control {
       this.object.setXY(this.mouseX - width / 2, this.mouseY - height / 2);
     });
 
+    const mouseEnterEvent = new MouseEnterEvent((e) => {
+      if (this.mouseDown) return;
+      document.body.style.cursor = "grab";
+    });
+
+    const mouseLeaveEvent = new MouseLeaveEvent((e) => {
+      if (this.mouseDown) return;
+      document.body.style.cursor = "default";
+    });
+
+    this.appendEventToObject(mouseEnterEvent);
+    this.appendEventToObject(mouseLeaveEvent);
     this.appendEventToObject(mouseDownEvent);
 
     this.appendEventToScene(mouseUpEvent);
