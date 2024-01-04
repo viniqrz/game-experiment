@@ -112,7 +112,7 @@ class KeyboardEventsList {
   }
 
   init() {
-    const KEYS = ["w", "s", "a", "d"];
+    const KEYS = ["w", "s", "a", "d", " "];
     const TYPES = [new KeyDownEvent().type, new KeyUpEvent().type];
 
     this.typesCallbacks = new Map();
@@ -158,6 +158,8 @@ class Scene {
     this.html.classList.add("scene");
     this.mouse = new MouseEventsList(window);
     this.keyboard = new KeyboardEventsList(window);
+
+    this.initGravity();
   }
 
   addObject(gameObject) {
@@ -266,6 +268,24 @@ class Scene {
 
     return true;
   }
+
+  initGravity() {
+    this.gravitySpam = new Spam(() => {
+      this.ensureGravity();
+    }, 3);
+
+    this.gravitySpam.start();
+  }
+
+  ensureGravity() {
+    const objects = this.getObjects();
+
+    for (const object of objects) {
+      if (object.getGravity()) {
+        object.down(object.gravityIntensity);
+      }
+    }
+  }
 }
 
 class GameObject {
@@ -276,9 +296,17 @@ class GameObject {
     this.z = 0;
     this.mouse = new MouseEventsList(this.html);
     this.html.style.backgroundColor = color;
+
     this.scene = scene;
+
     this.wsadControl = new WSADControl(this);
+    this.jumpYControl = new JumpYControl(this);
+
     this.collision = false;
+
+    this.gravity = false;
+    this.gravityIntensity = 0.5;
+
     this.ID = Math.random().toString().slice(2);
   }
 
@@ -300,8 +328,28 @@ class GameObject {
     return this.collision;
   }
 
+  setGravity(val) {
+    this.gravity = val;
+  }
+
+  getGravity() {
+    return this.gravity;
+  }
+
+  setGravityIntensity(val) {
+    this.gravityIntensity = val;
+  }
+
+  getGravityIntensity() {
+    return this.gravityIntensity;
+  }
+
   getWsadControl() {
     return this.wsadControl;
+  }
+
+  getJumpYControl() {
+    return this.jumpYControl;
   }
 
   setColor(color) {
@@ -389,6 +437,52 @@ class Character extends GameObject {
 
   getHtml() {
     return this.html;
+  }
+}
+
+class JumpYControl {
+  constructor(object, active = false) {
+    this.active = active;
+    this.object = object;
+    this.events = [];
+
+    this.duration = 300;
+    this.spamDelay = 1;
+
+    this.init();
+  }
+
+  init() {
+    const objectJumpSpam = new Spam(() => {
+      this.object.up();
+    }, this.spamDelay);
+
+    this.events.push(
+      new KeyDownEvent(" ", () => objectJumpSpam.start(this.duration))
+    );
+
+    for (const event of this.events) {
+      event.setActive(this.active);
+      this.object.scene.keyboard.addEvent(event);
+    }
+  }
+
+  getActive() {
+    return this.active;
+  }
+
+  setActive(active) {
+    this.active = active;
+
+    if (active) {
+      this.events.forEach((event) => {
+        event.active = true;
+      });
+    } else {
+      this.events.forEach((event) => {
+        event.active = false;
+      });
+    }
   }
 }
 
@@ -504,6 +598,8 @@ const randomRGBColor = () => {
   characters.forEach((char) => {
     const clickToGetHello = new MouseDownEvent(() => {
       char.getWsadControl().setActive(!char.getWsadControl().getActive());
+      char.getJumpYControl().setActive(!char.getJumpYControl().getActive());
+      char.setGravity(!char.getGravity());
 
       if (char.getWsadControl().getActive()) {
         char.setColor("tomato");
