@@ -15,25 +15,26 @@
   char1.setCollision(true);
   char2.setCollision(true);
 
+  char1.getDragAndDropControl().setActive(true);
+  char2.getDragAndDropControl().setActive(true);
+
   const characters = [char1, char2];
 
-  characters.forEach((char) => {
-    const clickToGetHello = new MouseDownEvent(() => {
-      char.getWsadControl().setActive(!char.getWsadControl().getActive());
-      char.getJumpYControl().setActive(!char.getJumpYControl().getActive());
-      char
-        .getFollowCursorControl()
-        .setActive(!char.getFollowCursorControl().getActive());
+  // characters.forEach((char) => {
+  //   const clickToGetHello = new MouseDownEvent(() => {
+  //     char.getWsadControl().setActive(!char.getWsadControl().getActive());
+  //     char.getJumpYControl().setActive(!char.getJumpYControl().getActive());
+  //     // char
+  //     //   .getFollowCursorControl()
+  //     //   .setActive(!char.getFollowCursorControl().getActive());
 
-      // char.setGravity(!char.getGravity());
+  //     if (char.getWsadControl().getActive()) {
+  //       char.setColor("tomato");
+  //     } else {
+  //       char.setColor("cyan");
+  //     }
+  //   });
 
-      if (char.getWsadControl().getActive()) {
-        char.setColor("tomato");
-      } else {
-        char.setColor("cyan");
-      }
-    });
-
-    char.mouse.addEvent(clickToGetHello);
-  });
+  //   char.mouse.addEvent(clickToGetHello);
+  // });
 })();

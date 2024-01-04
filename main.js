@@ -72,6 +72,13 @@ class MouseDownEvent extends MouseEvent {
   }
 }
 
+class MouseUpEvent extends MouseEvent {
+  constructor(callback) {
+    super(callback, "mouseup");
+    this.type = "mouseup";
+  }
+}
+
 class MouseMoveEvent extends MouseEvent {
   constructor(callback) {
     super(callback, "mousemove");
@@ -91,6 +98,7 @@ class MouseEventsList {
 
     this.typesCallbacks.set(new MouseDownEvent().type, []);
     this.typesCallbacks.set(new MouseMoveEvent().type, []);
+    this.typesCallbacks.set(new MouseUpEvent().type, []);
 
     for (const [type, callbacks] of this.typesCallbacks) {
       this.parentNode.addEventListener(type, (e) => {
@@ -312,6 +320,7 @@ class GameObject {
     this.wsadControl = new WSADControl(this);
     this.jumpYControl = new JumpYControl(this);
     this.followCursorControl = new FollowCursorControl(this);
+    this.dragAndDropControl = new DragAndDropControl(this);
 
     this.collision = false;
 
@@ -365,6 +374,10 @@ class GameObject {
 
   getFollowCursorControl() {
     return this.followCursorControl;
+  }
+
+  getDragAndDropControl() {
+    return this.dragAndDropControl;
   }
 
   setColor(color) {
@@ -479,6 +492,90 @@ class Control {
       });
     }
   }
+
+  /**
+   * @param {GameEvent} event
+   * @returns {void}
+   * @memberof Control
+   * @description Append event to the object's SCENE and to the control
+   */
+  appendEventToScene(event) {
+    this.events.push(event);
+    event.setActive(this.active);
+
+    if (event instanceof KeyboardEvent) {
+      this.object.scene.keyboard.addEvent(event);
+    }
+
+    if (event instanceof MouseEvent) {
+      this.object.scene.mouse.addEvent(event);
+    }
+  }
+
+  /**
+   * @param {GameEvent} event
+   * @returns {void}
+   * @memberof Control
+   * @description Append event to the object and to the control
+   */
+  appendEventToObject(event) {
+    this.events.push(event);
+    event.setActive(this.active);
+
+    if (event instanceof KeyboardEvent) {
+      this.object.keyboard.addEvent(event);
+    }
+
+    if (event instanceof MouseEvent) {
+      this.object.mouse.addEvent(event);
+    }
+  }
+
+  appendInitialEvents(events) {
+    events.forEach((event) => this.appendEvent(event));
+  }
+}
+
+class DragAndDropControl extends Control {
+  constructor(object, active = false) {
+    super(object, active);
+
+    this.mouseDown = false;
+    this.mouseX = 0;
+    this.mouseY = 0;
+
+    this.init();
+  }
+
+  init() {
+    const mouseDownEvent = new MouseDownEvent((e) => {
+      console.log("mousedown");
+      this.mouseDown = true;
+    });
+
+    const mouseUpEvent = new MouseUpEvent((e) => {
+      this.mouseDown = false;
+    });
+
+    const mouseMoveEvent = new MouseMoveEvent((e) => {
+      this.mouseX = e.clientX;
+      this.mouseY = e.clientY;
+
+      if (!this.mouseDown) return;
+
+      const objectBoundaries = this.object.getBoundaries();
+
+      const width = objectBoundaries.right - objectBoundaries.left;
+      const height = objectBoundaries.bottom - objectBoundaries.top;
+
+      this.object.setXY(this.mouseX - width / 2, this.mouseY - height / 2);
+    });
+
+    this.appendEventToObject(mouseDownEvent);
+
+    this.appendEventToScene(mouseUpEvent);
+    this.appendEventToScene(mouseMoveEvent);
+  }
 }
 
 class FollowCursorControl extends Control {
@@ -521,15 +618,6 @@ class FollowCursorControl extends Control {
     this.init();
   }
 
-  setSmoothness(smoothness) {
-    this.smoothness = smoothness;
-
-    this.upSpam.updateDelay(smoothness);
-    this.downSpam.updateDelay(smoothness);
-    this.leftSpam.updateDelay(smoothness);
-    this.rightSpam.updateDelay(smoothness);
-  }
-
   init() {
     const objectFollowCursor = new MouseMoveEvent((e) => {
       this.lastCursorX = e.clientX;
@@ -537,12 +625,16 @@ class FollowCursorControl extends Control {
       this.follow();
     });
 
-    this.events.push(objectFollowCursor);
+    this.appendEventToScene(objectFollowCursor);
+  }
 
-    for (const event of this.events) {
-      event.setActive(this.active);
-      this.object.scene.mouse.addEvent(event);
-    }
+  setSmoothness(smoothness) {
+    this.smoothness = smoothness;
+
+    this.upSpam.updateDelay(smoothness);
+    this.downSpam.updateDelay(smoothness);
+    this.leftSpam.updateDelay(smoothness);
+    this.rightSpam.updateDelay(smoothness);
   }
 
   getCursorDistancesReferentToObject() {
@@ -609,69 +701,77 @@ class WSADControl extends Control {
   constructor(object, active = false) {
     super(object, active);
 
+    const INITIAL_SPAM = 2;
+
+    this.spamDelay = INITIAL_SPAM;
+
+    this.goUpSpam = new Spam(() => {
+      this.object.up();
+    }, this.spamDelay);
+    this.goDownSpam = new Spam(() => {
+      this.object.down();
+    }, this.spamDelay);
+    this.goLeftSpam = new Spam(() => {
+      this.object.left();
+    }, this.spamDelay);
+    this.goRightSpam = new Spam(() => {
+      this.object.right();
+    }, this.spamDelay);
+
     this.init();
   }
 
   init() {
-    const objectMoveTopSpam = new Spam(() => {
-      this.object.up();
-    }, 2);
-    const objectMoveBottomSpam = new Spam(() => {
-      this.object.down();
-    }, 2);
-    const objectMoveLeftSpam = new Spam(() => {
-      this.object.left();
-    }, 2);
-    const objectMoveRightSpam = new Spam(() => {
-      this.object.right();
-    }, 2);
+    const keyDownW = new KeyDownEvent("w", () => {
+      this.goUpSpam.start();
+    });
 
-    this.events.push(
-      new KeyDownEvent("w", () => {
-        objectMoveTopSpam.start();
-      })
-    );
-    this.events.push(
-      new KeyDownEvent("s", () => {
-        objectMoveBottomSpam.start();
-      })
-    );
-    this.events.push(
-      new KeyDownEvent("a", () => {
-        objectMoveLeftSpam.start();
-      })
-    );
-    this.events.push(
-      new KeyDownEvent("d", () => {
-        objectMoveRightSpam.start();
-      })
-    );
+    const keyDownS = new KeyDownEvent("s", () => {
+      this.goDownSpam.start();
+    });
 
-    this.events.push(
-      new KeyUpEvent("w", () => {
-        objectMoveTopSpam.stop();
-      })
-    );
-    this.events.push(
-      new KeyUpEvent("s", () => {
-        objectMoveBottomSpam.stop();
-      })
-    );
-    this.events.push(
-      new KeyUpEvent("a", () => {
-        objectMoveLeftSpam.stop();
-      })
-    );
-    this.events.push(
-      new KeyUpEvent("d", () => {
-        objectMoveRightSpam.stop();
-      })
-    );
+    const keyDownA = new KeyDownEvent("a", () => {
+      this.goLeftSpam.start();
+    });
 
-    for (const event of this.events) {
-      event.setActive(this.active);
-      this.object.scene.keyboard.addEvent(event);
-    }
+    const keyDownD = new KeyDownEvent("d", () => {
+      this.goRightSpam.start();
+    });
+
+    const keyUpW = new KeyUpEvent("w", () => {
+      this.goUpSpam.stop();
+    });
+
+    const keyUpS = new KeyUpEvent("s", () => {
+      this.goDownSpam.stop();
+    });
+
+    const keyUpA = new KeyUpEvent("a", () => {
+      this.goLeftSpam.stop();
+    });
+
+    const keyUpD = new KeyUpEvent("d", () => {
+      this.goRightSpam.stop();
+    });
+
+    this.appendEventToScene(keyDownW);
+    this.appendEventToScene(keyDownS);
+    this.appendEventToScene(keyDownA);
+    this.appendEventToScene(keyDownD);
+
+    this.appendEventToScene(keyUpW);
+    this.appendEventToScene(keyUpS);
+    this.appendEventToScene(keyUpA);
+    this.appendEventToScene(keyUpD);
+  }
+
+  updateSpeed(speed) {
+    this.spamDelay = speed;
+
+    this.goUpSpam.updateDelay(speed);
+    this.goDownSpam.updateDelay(speed);
+    this.goLeftSpam.updateDelay(speed);
+    this.goRightSpam.updateDelay(speed);
   }
 }
 
