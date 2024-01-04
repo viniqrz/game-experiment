@@ -487,6 +487,7 @@ class FollowCursorControl extends Control {
 
     this.lastCursorX = 0;
     this.lastCursorY = 0;
+    this.smoothness = 4;
 
     this.rightSpam = new Spam(() => {
       if (this.getCursorDistancesReferentToObject().right > 0) {
@@ -494,30 +495,39 @@ class FollowCursorControl extends Control {
       } else {
         this.rightSpam.stop();
       }
-    }, 2);
+    }, this.smoothness);
     this.leftSpam = new Spam(() => {
       if (this.getCursorDistancesReferentToObject().left > 0) {
         this.object.left();
       } else {
         this.leftSpam.stop();
       }
-    }, 2);
+    }, this.smoothness);
     this.upSpam = new Spam(() => {
       if (this.getCursorDistancesReferentToObject().top > 0) {
         this.object.up();
       } else {
         this.upSpam.stop();
       }
-    }, 2);
+    }, this.smoothness);
     this.downSpam = new Spam(() => {
       if (this.getCursorDistancesReferentToObject().bottom > 0) {
         this.object.down();
       } else {
         this.downSpam.stop();
       }
-    }, 2);
+    }, this.smoothness);
 
     this.init();
+  }
+
+  setSmoothness(smoothness) {
+    this.smoothness = smoothness;
+
+    this.upSpam.updateDelay(smoothness);
+    this.downSpam.updateDelay(smoothness);
+    this.leftSpam.updateDelay(smoothness);
+    this.rightSpam.updateDelay(smoothness);
   }
 
   init() {
@@ -559,12 +569,13 @@ class FollowCursorControl extends Control {
 
   follow() {
     const distances = this.getCursorDistancesReferentToObject();
-    const THRESHOLD = 16;
 
-    if (distances.left > THRESHOLD) this.leftSpam.start();
-    if (distances.right > THRESHOLD) this.rightSpam.start();
-    if (distances.top > THRESHOLD) this.upSpam.start();
-    if (distances.bottom > THRESHOLD) this.downSpam.start();
+    const RADIUS_THRESHOLD = 2;
+
+    if (distances.left > RADIUS_THRESHOLD) this.leftSpam.start();
+    if (distances.right > RADIUS_THRESHOLD) this.rightSpam.start();
+    if (distances.top > RADIUS_THRESHOLD) this.upSpam.start();
+    if (distances.bottom > RADIUS_THRESHOLD) this.downSpam.start();
   }
 }
 
@@ -669,13 +680,15 @@ class Spam {
     this.callback = callback;
     this.delay = delay;
     this.id = null;
-    this.spam = false;
+    this.isRunning = false;
+    this.lastStopAfter = null;
   }
 
-  async start(stopAfter = null) {
-    if (this.spam) return;
-    this.spam = true;
+  start(stopAfter = null) {
+    if (this.isRunning) return;
+    this.isRunning = true;
     this.id = setInterval(this.callback, this.delay);
+    this.lastStopAfter = stopAfter;
 
     if (stopAfter) {
       setTimeout(() => {
@@ -684,8 +697,20 @@ class Spam {
     }
   }
 
+  updateDelay(delay) {
+    this.delay = delay;
+    if (this.isRunning) {
+      this.stop();
+      this.start();
+    }
+  }
+
+  getIsRunning() {
+    return this.isRunning;
+  }
+
   stop() {
-    this.spam = false;
+    this.isRunning = false;
     clearInterval(this.id);
   }
 }
