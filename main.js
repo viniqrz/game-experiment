@@ -72,6 +72,13 @@ class MouseDownEvent extends MouseEvent {
   }
 }
 
+class MouseMoveEvent extends MouseEvent {
+  constructor(callback) {
+    super(callback, "mousemove");
+    this.type = "mousemove";
+  }
+}
+
 class MouseEventsList {
   constructor(parentNode) {
     this.parentNode = parentNode;
@@ -83,6 +90,7 @@ class MouseEventsList {
     this.typesCallbacks = new Map();
 
     this.typesCallbacks.set(new MouseDownEvent().type, []);
+    this.typesCallbacks.set(new MouseMoveEvent().type, []);
 
     for (const [type, callbacks] of this.typesCallbacks) {
       this.parentNode.addEventListener(type, (e) => {
@@ -99,7 +107,9 @@ class MouseEventsList {
 
   addEvent(event) {
     this.events.push(event);
-    this.typesCallbacks.get(event.type).push(event.callback);
+    this.typesCallbacks.get(event.type).push((e) => {
+      if (event.active) event.callback(e);
+    });
   }
 }
 
@@ -301,6 +311,7 @@ class GameObject {
 
     this.wsadControl = new WSADControl(this);
     this.jumpYControl = new JumpYControl(this);
+    this.followCursorControl = new FollowCursorControl(this);
 
     this.collision = false;
 
@@ -350,6 +361,10 @@ class GameObject {
 
   getJumpYControl() {
     return this.jumpYControl;
+  }
+
+  getFollowCursorControl() {
+    return this.followCursorControl;
   }
 
   setColor(color) {
@@ -466,6 +481,93 @@ class Control {
   }
 }
 
+class FollowCursorControl extends Control {
+  constructor(object, active = false) {
+    super(object, active);
+
+    this.lastCursorX = 0;
+    this.lastCursorY = 0;
+
+    this.rightSpam = new Spam(() => {
+      if (this.getCursorDistancesReferentToObject().right > 0) {
+        this.object.right();
+      } else {
+        this.rightSpam.stop();
+      }
+    }, 2);
+    this.leftSpam = new Spam(() => {
+      if (this.getCursorDistancesReferentToObject().left > 0) {
+        this.object.left();
+      } else {
+        this.leftSpam.stop();
+      }
+    }, 2);
+    this.upSpam = new Spam(() => {
+      if (this.getCursorDistancesReferentToObject().top > 0) {
+        this.object.up();
+      } else {
+        this.upSpam.stop();
+      }
+    }, 2);
+    this.downSpam = new Spam(() => {
+      if (this.getCursorDistancesReferentToObject().bottom > 0) {
+        this.object.down();
+      } else {
+        this.downSpam.stop();
+      }
+    }, 2);
+
+    this.init();
+  }
+
+  init() {
+    const objectFollowCursor = new MouseMoveEvent((e) => {
+      this.lastCursorX = e.clientX;
+      this.lastCursorY = e.clientY;
+      this.follow();
+    });
+
+    this.events.push(objectFollowCursor);
+
+    for (const event of this.events) {
+      event.setActive(this.active);
+      this.object.scene.mouse.addEvent(event);
+    }
+  }
+
+  getCursorDistancesReferentToObject() {
+    const objectPosition = this.object.getBoundaries();
+
+    const width = objectPosition.right - objectPosition.left;
+    const height = objectPosition.bottom - objectPosition.top;
+
+    const objectCenterX = objectPosition.left + width / 2;
+    const objectCenterY = objectPosition.top + height / 2;
+
+    const left = objectCenterX - this.lastCursorX;
+    const right = this.lastCursorX - objectCenterX;
+    const top = objectCenterY - this.lastCursorY;
+    const bottom = this.lastCursorY - objectCenterY;
+
+    return {
+      left,
+      right,
+      top,
+      bottom,
+    };
+  }
+
+  follow() {
+    const distances = this.getCursorDistancesReferentToObject();
+    const THRESHOLD = 16;
+
+    if (distances.left > THRESHOLD) this.leftSpam.start();
+    if (distances.right > THRESHOLD) this.rightSpam.start();
+    if (distances.top > THRESHOLD) this.upSpam.start();
+    if (distances.bottom > THRESHOLD) this.downSpam.start();
+  }
+}
+
 class JumpYControl extends Control {
   constructor(object, active = false) {
     super(object, active);
@@ -513,15 +615,47 @@ class WSADControl extends Control {
       this.object.right();
     }, 2);
 
-    this.events.push(new KeyDownEvent("w", () => objectMoveTopSpam.start()));
-    this.events.push(new KeyDownEvent("s", () => objectMoveBottomSpam.start()));
-    this.events.push(new KeyDownEvent("a", () => objectMoveLeftSpam.start()));
-    this.events.push(new KeyDownEvent("d", () => objectMoveRightSpam.start()));
+    this.events.push(
+      new KeyDownEvent("w", () => {
+        objectMoveTopSpam.start();
+      })
+    );
+    this.events.push(
+      new KeyDownEvent("s", () => {
+        objectMoveBottomSpam.start();
+      })
+    );
+    this.events.push(
+      new KeyDownEvent("a", () => {
+        objectMoveLeftSpam.start();
+      })
+    );
+    this.events.push(
+      new KeyDownEvent("d", () => {
+        objectMoveRightSpam.start();
+      })
+    );
 
-    this.events.push(new KeyUpEvent("w", () => objectMoveTopSpam.stop()));
-    this.events.push(new KeyUpEvent("s", () => objectMoveBottomSpam.stop()));
-    this.events.push(new KeyUpEvent("a", () => objectMoveLeftSpam.stop()));
-    this.events.push(new KeyUpEvent("d", () => objectMoveRightSpam.stop()));
+    this.events.push(
+      new KeyUpEvent("w", () => {
+        objectMoveTopSpam.stop();
+      })
+    );
+    this.events.push(
+      new KeyUpEvent("s", () => {
+        objectMoveBottomSpam.stop();
+      })
+    );
+    this.events.push(
+      new KeyUpEvent("a", () => {
+        objectMoveLeftSpam.stop();
+      })
+    );
+    this.events.push(
+      new KeyUpEvent("d", () => {
+        objectMoveRightSpam.stop();
+      })
+    );
 
     for (const event of this.events) {
       event.setActive(this.active);
@@ -538,7 +672,7 @@ class Spam {
     this.spam = false;
   }
 
-  start(stopAfter = null) {
+  async start(stopAfter = null) {
     if (this.spam) return;
     this.spam = true;
     this.id = setInterval(this.callback, this.delay);

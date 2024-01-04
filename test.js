@@ -21,6 +21,10 @@
     const clickToGetHello = new MouseDownEvent(() => {
       char.getWsadControl().setActive(!char.getWsadControl().getActive());
       char.getJumpYControl().setActive(!char.getJumpYControl().getActive());
+      char
+        .getFollowCursorControl()
+        .setActive(!char.getFollowCursorControl().getActive());
+
       // char.setGravity(!char.getGravity());
 
       if (char.getWsadControl().getActive()) {
