@@ -718,8 +718,6 @@ class FollowCursorOnClickControl extends AbstractFollowCursorControl {
   }
 
   init() {
-    console.log(1);
-
     const mouseDownEvent = new MouseDownEvent((e) => {
       this.mouseDown = !this.mouseDown;
       document.body.style.cursor = "grabbing";
