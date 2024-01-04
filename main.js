@@ -440,31 +440,11 @@ class Character extends GameObject {
   }
 }
 
-class JumpYControl {
+class Control {
   constructor(object, active = false) {
     this.active = active;
     this.object = object;
     this.events = [];
-
-    this.duration = 300;
-    this.spamDelay = 1;
-
-    this.init();
-  }
-
-  init() {
-    const objectJumpSpam = new Spam(() => {
-      this.object.up();
-    }, this.spamDelay);
-
-    this.events.push(
-      new KeyDownEvent(" ", () => objectJumpSpam.start(this.duration))
-    );
-
-    for (const event of this.events) {
-      event.setActive(this.active);
-      this.object.scene.keyboard.addEvent(event);
-    }
   }
 
   getActive() {
@@ -486,11 +466,35 @@ class JumpYControl {
   }
 }
 
-class WSADControl {
+class JumpYControl extends Control {
   constructor(object, active = false) {
-    this.active = active;
-    this.object = object;
-    this.events = [];
+    super(object, active);
+
+    this.duration = 300;
+    this.spamDelay = 1;
+
+    this.init();
+  }
+
+  init() {
+    const objectJumpSpam = new Spam(() => {
+      this.object.up();
+    }, this.spamDelay);
+
+    this.events.push(
+      new KeyDownEvent(" ", () => objectJumpSpam.start(this.duration))
+    );
+
+    for (const event of this.events) {
+      event.setActive(this.active);
+      this.object.scene.keyboard.addEvent(event);
+    }
+  }
+}
+
+class WSADControl extends Control {
+  constructor(object, active = false) {
+    super(object, active);
 
     this.init();
   }
@@ -522,24 +526,6 @@ class WSADControl {
     for (const event of this.events) {
       event.setActive(this.active);
       this.object.scene.keyboard.addEvent(event);
-    }
-  }
-
-  getActive() {
-    return this.active;
-  }
-
-  setActive(active) {
-    this.active = active;
-
-    if (active) {
-      this.events.forEach((event) => {
-        event.active = true;
-      });
-    } else {
-      this.events.forEach((event) => {
-        event.active = false;
-      });
     }
   }
 }
