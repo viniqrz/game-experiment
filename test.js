@@ -19,27 +19,27 @@
   char2.setCollision(true);
   char3.setCollision(true);
 
-  char1.getDragAndDropControl().setActive(true);
-  char2.getDragAndDropControl().setActive(true);
-  char3.getDragAndDropControl().setActive(true);
+  // char1.getDragAndDropControl().setActive(true);
+  // char2.getDragAndDropControl().setActive(true);
+  // char3.getDragAndDropControl().setActive(true);
 
-  // const characters = [char1, char2];
+  scene.objects.forEach((char) => {
+    // char.getFollowCursorOnClickControl().setActive(true);
 
-  // characters.forEach((char) => {
-  //   const clickToGetHello = new MouseDownEvent(() => {
-  //     char.getWsadControl().setActive(!char.getWsadControl().getActive());
-  //     char.getJumpYControl().setActive(!char.getJumpYControl().getActive());
-  //     // char
-  //     //   .getFollowCursorControl()
-  //     //   .setActive(!char.getFollowCursorControl().getActive());
+    const clickToGetHello = new MouseDownEvent(() => {
+      char.getWsadControl().setActive(!char.getWsadControl().getActive());
+      char.getJumpYControl().setActive(!char.getJumpYControl().getActive());
+      char
+        .getFollowCursorOnMoveControl()
+        .setActive(!char.getFollowCursorOnMoveControl().getActive());
 
-  //     if (char.getWsadControl().getActive()) {
-  //       char.setColor("tomato");
-  //     } else {
-  //       char.setColor("cyan");
-  //     }
-  //   });
+      if (char.getWsadControl().getActive()) {
+        char.setColor("tomato");
+      } else {
+        char.setColor("cyan");
+      }
+    });
 
-  //   char.mouse.addEvent(clickToGetHello);
-  // });
+    char.mouse.addEvent(clickToGetHello);
+  });
 })();

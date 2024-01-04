@@ -349,8 +349,9 @@ class GameObject {
 
     this.wsadControl = new WSADControl(this);
     this.jumpYControl = new JumpYControl(this);
-    this.followCursorControl = new FollowCursorControl(this);
     this.dragAndDropControl = new DragAndDropControl(this);
+    this.followCursorOnMoveControl = new FollowCursorOnMoveControl(this);
+    this.followCursorOnClickControl = new FollowCursorOnClickControl(this);
 
     this.collision = false;
 
@@ -400,8 +401,12 @@ class GameObject {
     return this.jumpYControl;
   }
 
-  getFollowCursorControl() {
-    return this.followCursorControl;
+  getFollowCursorOnMoveControl() {
+    return this.followCursorOnMoveControl;
+  }
+
+  getFollowCursorOnClickControl() {
+    return this.followCursorOnClickControl;
   }
 
   getDragAndDropControl() {
@@ -619,7 +624,7 @@ class DragAndDropControl extends Control {
   }
 }
 
-class FollowCursorControl extends Control {
+class AbstractFollowCursorControl extends Control {
   constructor(object, active = false) {
     super(object, active);
 
@@ -655,19 +660,10 @@ class FollowCursorControl extends Control {
         this.downSpam.stop();
       }
     }, this.smoothness);
-
-    this.init();
   }
 
-  init() {
-    const objectFollowCursor = new MouseMoveEvent((e) => {
-      this.lastCursorX = e.clientX;
-      this.lastCursorY = e.clientY;
-      this.follow();
-    });
-
-    this.appendEventToScene(objectFollowCursor);
-  }
+  // abstract
+  init() {}
 
   setSmoothness(smoothness) {
     this.smoothness = smoothness;
@@ -709,6 +705,64 @@ class FollowCursorControl extends Control {
     if (distances.right > RADIUS_THRESHOLD) this.rightSpam.start();
     if (distances.top > RADIUS_THRESHOLD) this.upSpam.start();
     if (distances.bottom > RADIUS_THRESHOLD) this.downSpam.start();
+  }
+}
+
+class FollowCursorOnClickControl extends AbstractFollowCursorControl {
+  constructor(object, active = false) {
+    super(object, active);
+
+    this.mouseDown = false;
+
+    this.init();
+  }
+
+  init() {
+    console.log(1);
+
+    const mouseDownEvent = new MouseDownEvent((e) => {
+      this.mouseDown = !this.mouseDown;
+      document.body.style.cursor = "grabbing";
+    });
+
+    const mouseEnterEvent = new MouseEnterEvent((e) => {
+      if (this.mouseDown) return;
+      document.body.style.cursor = "grab";
+    });
+
+    const mouseLeaveEvent = new MouseLeaveEvent((e) => {
+      if (this.mouseDown) return;
+      document.body.style.cursor = "default";
+    });
+    const objectFollowCursor = new MouseMoveEvent((e) => {
+      this.lastCursorX = e.clientX;
+      this.lastCursorY = e.clientY;
+      if (this.mouseDown) this.follow();
+    });
+
+    this.appendEventToScene(objectFollowCursor);
+
+    this.appendEventToObject(mouseEnterEvent);
+    this.appendEventToObject(mouseLeaveEvent);
+    this.appendEventToObject(mouseDownEvent);
+  }
+}
+
+class FollowCursorOnMoveControl extends AbstractFollowCursorControl {
+  constructor(object, active = false) {
+    super(object, active);
+
+    this.init();
+  }
+
+  init() {
+    const objectFollowCursor = new MouseMoveEvent((e) => {
+      this.lastCursorX = e.clientX;
+      this.lastCursorY = e.clientY;
+      this.follow();
+    });
+
+    this.appendEventToScene(objectFollowCursor);
   }
 }
 
