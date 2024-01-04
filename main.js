@@ -201,6 +201,8 @@ class Scene {
     this.mouse = new MouseEventsList(window);
     this.keyboard = new KeyboardEventsList(window);
 
+    document.addEventListener("contextmenu", (event) => event.preventDefault());
+
     this.initGravity();
   }
 
@@ -340,6 +342,7 @@ class GameObject {
     this.html.id = this.ID;
     this.html.style.backgroundColor = color;
     this.html.style.position = "absolute";
+    this.html.draggable = "false";
 
     this.x = 0;
     this.y = 0;
@@ -587,32 +590,34 @@ class DragAndDropControl extends Control {
 
       if (!this.mouseDown) return;
 
-      const objectBoundaries = this.object.getBoundaries();
+      requestAnimationFrame(() => {
+        const objectBoundaries = this.object.getBoundaries();
 
-      const width = objectBoundaries.right - objectBoundaries.left;
-      const height = objectBoundaries.bottom - objectBoundaries.top;
+        const width = objectBoundaries.right - objectBoundaries.left;
+        const height = objectBoundaries.bottom - objectBoundaries.top;
 
-      this.object.setXY(this.mouseX - width / 2, this.mouseY - height / 2);
+        this.object.setXY(this.mouseX - width / 2, this.mouseY - height / 2);
+      });
     });
 
     const mouseDownEvent = new MouseDownEvent((e) => {
       this.mouseDown = true;
-      document.body.style.cursor = "grabbing";
+      // document.body.style.cursor = "grabbing";
     });
 
     const mouseUpEvent = new MouseUpEvent((e) => {
       this.mouseDown = false;
-      document.body.style.cursor = "default";
+      // document.body.style.cursor = "default";
     });
 
     const mouseEnterEvent = new MouseEnterEvent((e) => {
       if (this.mouseDown) return;
-      document.body.style.cursor = "grab";
+      // document.body.style.cursor = "grab";
     });
 
     const mouseLeaveEvent = new MouseLeaveEvent((e) => {
       if (this.mouseDown) return;
-      document.body.style.cursor = "default";
+      // document.body.style.cursor = "default";
     });
 
     this.appendEventToObject(mouseEnterEvent);
