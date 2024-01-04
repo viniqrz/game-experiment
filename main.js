@@ -602,22 +602,22 @@ class DragAndDropControl extends Control {
 
     const mouseDownEvent = new MouseDownEvent((e) => {
       this.mouseDown = true;
-      // document.body.style.cursor = "grabbing";
+      document.body.style.cursor = "grabbing";
     });
 
     const mouseUpEvent = new MouseUpEvent((e) => {
       this.mouseDown = false;
-      // document.body.style.cursor = "default";
+      document.body.style.cursor = "default";
     });
 
     const mouseEnterEvent = new MouseEnterEvent((e) => {
       if (this.mouseDown) return;
-      // document.body.style.cursor = "grab";
+      document.body.style.cursor = "grab";
     });
 
     const mouseLeaveEvent = new MouseLeaveEvent((e) => {
       if (this.mouseDown) return;
-      // document.body.style.cursor = "default";
+      document.body.style.cursor = "default";
     });
 
     this.appendEventToObject(mouseEnterEvent);
