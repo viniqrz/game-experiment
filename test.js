@@ -30,9 +30,10 @@ class Character extends GameObject {
 }
 
 class Bar extends GameObject {
-  constructor(scene) {
+  constructor(scene, color) {
     const html = document.createElement("div");
     html.classList.add("bar");
+    html.classList.add(color);
 
     super(scene, html);
   }
@@ -45,8 +46,8 @@ class Bar extends GameObject {
   const char2 = new Character(scene, "Jon");
   const char3 = new Character(scene, "Brandon");
 
-  const bar = new Bar(scene);
-  bar.name = "bar";
+  const bar1 = new Bar(scene, "green");
+  const bar2 = new Bar(scene, "brown");
 
   screen.setScene(scene);
 
@@ -54,15 +55,19 @@ class Bar extends GameObject {
   scene.addObject(char2);
   scene.addObject(char3);
 
-  scene.addObject(bar);
+  scene.addObject(bar1);
+  scene.addObject(bar2);
 
   char1.setXY(100, 100);
   char2.setXY(200, 350);
   char3.setXY(300, 200);
 
-  bar.setY(500);
+  bar1.setY(500);
+  bar2.setY(500 + bar1.getBoundaries().bottom - bar1.getBoundaries().top);
+  bar2.getTextureHtml().style.height = "5rem";
 
-  bar.setCollision(true);
+  bar1.setCollision(true);
+  bar2.setCollision(true);
 
   char1.setCollision(true);
   char2.setCollision(true);
@@ -79,9 +84,7 @@ class Bar extends GameObject {
       //   .setActive(!char.getFollowCursorOnMoveControl().getActive());
 
       if (char.getAdControl().getActive()) {
-        console.time();
-        char.toBlue();
-        console.timeEnd();
+        // char.toBlue();
       } else {
         char.toRed();
       }
