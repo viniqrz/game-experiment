@@ -208,7 +208,7 @@ class Scene {
 
   addObject(gameObject) {
     this.objects.push(gameObject);
-    this.html.appendChild(gameObject.getHtml());
+    this.html.appendChild(gameObject.getContainerHtml());
   }
 
   getHtml() {
@@ -245,12 +245,21 @@ class Scene {
         boundariesA.right > boundariesB.right) ||
       boundariesA.left === boundariesB.left;
 
+    if (hasXLeftOverlap) return true;
+
     const hasXRightOverlap =
       (boundariesA.right > boundariesB.left &&
         boundariesA.left < boundariesB.left) ||
       boundariesA.right === boundariesB.right;
 
-    return hasXLeftOverlap || hasXRightOverlap;
+    if (hasXRightOverlap) return true;
+
+    const hasXInnerOverlap =
+      boundariesA.left < boundariesB.right &&
+      boundariesA.right < boundariesB.right &&
+      boundariesA.right >= boundariesB.left;
+
+    return hasXInnerOverlap;
   }
 
   requestXUpdate(actor, isPositive) {
@@ -266,8 +275,8 @@ class Scene {
     const objects = this.getObjects();
 
     for (const object of objects) {
-      if (!object.collision) continue;
       if (object.ID === actor.ID) continue;
+      if (!object.collision) continue;
       if (object.z !== actor.z) continue;
 
       const actorBoundaries = actor.getBoundaries();
@@ -278,16 +287,18 @@ class Scene {
           actor,
           object
         );
-        if (!isThereYAxisOverlap) return true;
+        if (!isThereYAxisOverlap) continue;
 
         if (isPositive) {
-          if (actorBoundaries.left > objectBoundaries.left) return true;
+          if (actorBoundaries.left > objectBoundaries.left) continue;
+          if (actorBoundaries.right < objectBoundaries.left) continue;
 
-          return !(actorBoundaries.right >= objectBoundaries.left);
+          return false;
         } else {
-          if (actorBoundaries.right < objectBoundaries.right) return true;
+          if (actorBoundaries.right < objectBoundaries.right) continue;
+          if (actorBoundaries.left > objectBoundaries.right) continue;
 
-          return !(actorBoundaries.left <= objectBoundaries.right);
+          return false;
         }
       }
 
@@ -296,16 +307,18 @@ class Scene {
           actor,
           object
         );
-        if (!isThereXAxisOverlap) return true;
+        if (!isThereXAxisOverlap) continue;
 
         if (isPositive) {
-          if (actorBoundaries.top > objectBoundaries.top) return true;
+          if (actorBoundaries.top > objectBoundaries.top) continue;
+          if (actorBoundaries.bottom < objectBoundaries.top) continue;
 
-          return !(actorBoundaries.bottom >= objectBoundaries.top);
+          return false;
         } else {
-          if (actorBoundaries.bottom < objectBoundaries.bottom) return true;
+          if (actorBoundaries.bottom < objectBoundaries.bottom) continue;
+          if (actorBoundaries.top > objectBoundaries.bottom) continue;
 
-          return !(actorBoundaries.top <= objectBoundaries.bottom);
+          return false;
         }
       }
     }
@@ -330,27 +343,65 @@ class Scene {
       }
     }
   }
+
+  findObjectBelowWithinRange(actor, range = 0) {
+    const objects = this.getObjects();
+
+    for (const object of objects) {
+      if (object.ID === actor.ID) continue;
+      if (!object.collision) continue;
+      if (object.z !== actor.z) continue;
+
+      const actorBoundaries = actor.getBoundaries();
+      const objectBoundaries = object.getBoundaries();
+
+      const isThereXAxisOverlap = this.checkIfThereIsXAxisOverlap(
+        actor,
+        object
+      );
+      if (!isThereXAxisOverlap) continue;
+
+      if (actorBoundaries.top > objectBoundaries.top) continue;
+      if (actorBoundaries.bottom + range < objectBoundaries.top) continue;
+
+      return object;
+    }
+
+    return null;
+  }
+
+  requestJump(actor) {
+    const objectBelow = this.findObjectBelowWithinRange(actor);
+    return Boolean(objectBelow);
+  }
 }
 
 class GameObject {
-  constructor(scene, html, color = "cyan") {
+  static GAME_OBJECT_CLASS_NAME = "game-object-container";
+
+  constructor(scene, textureHtml) {
     this.ID = Math.random().toString().slice(2);
 
-    this.html = html;
+    this.containerHtml = document.createElement("div");
+    this.containerHtml.classList.add(GameObject.GAME_OBJECT_CLASS_NAME);
+    this.containerHtml.appendChild(textureHtml);
+
+    this.textureHtml = textureHtml;
+
     this.scene = scene;
 
-    this.html.id = this.ID;
-    this.html.style.backgroundColor = color;
-    this.html.style.position = "absolute";
-    this.html.draggable = "false";
+    this.containerHtml.id = this.ID;
+    this.containerHtml.style.position = "absolute";
+    this.containerHtml.draggable = "false";
 
     this.x = 0;
     this.y = 0;
     this.z = 0;
 
-    this.mouse = new MouseEventsList(this.html);
+    this.mouse = new MouseEventsList(this.containerHtml);
 
     this.wsadControl = new WSADControl(this);
+    this.adControl = new ADControl(this);
     this.jumpYControl = new JumpYControl(this);
     this.dragAndDropControl = new DragAndDropControl(this);
     this.followCursorOnMoveControl = new FollowCursorOnMoveControl(this);
@@ -359,11 +410,28 @@ class GameObject {
     this.collision = false;
 
     this.gravity = false;
-    this.gravityIntensity = 0.5;
+    this.gravityIntensity = 1;
+  }
+
+  getContainerHtml() {
+    return this.containerHtml;
+  }
+
+  getTextureHtml() {
+    return this.textureHtml;
+  }
+
+  notifyTextureChange() {}
+
+  updateTextureHtml(textureHtml) {
+    this.containerHtml.innerHTML = textureHtml.outerHTML;
+    this.textureHtml = textureHtml;
+    this.notifyTextureChange();
   }
 
   getBoundaries() {
-    const { left, right, top, bottom } = this.html.getBoundingClientRect();
+    const { left, right, top, bottom } =
+      this.getContainerHtml().getBoundingClientRect();
     return {
       left,
       right,
@@ -400,6 +468,10 @@ class GameObject {
     return this.wsadControl;
   }
 
+  getAdControl() {
+    return this.adControl;
+  }
+
   getJumpYControl() {
     return this.jumpYControl;
   }
@@ -416,21 +488,14 @@ class GameObject {
     return this.dragAndDropControl;
   }
 
-  setColor(color) {
-    this.html.style.backgroundColor = color;
-  }
-
-  getColor() {
-    return this.html.style.backgroundColor;
-  }
-
   setX(x) {
     const isPositive = this.x < x;
     const allowed = this.scene.requestXUpdate(this, isPositive);
     if (!allowed) return;
 
     this.x = x;
-    this.html.style.left = `${x}px`;
+
+    this.getContainerHtml().style.left = `${x}px`;
   }
 
   setY(y) {
@@ -439,12 +504,14 @@ class GameObject {
     if (!allowed) return;
 
     this.y = y;
-    this.html.style.top = `${y}px`;
+
+    this.getContainerHtml().style.top = `${y}px`;
   }
 
   setZ(z) {
     this.z = z;
-    this.html.style.zIndex = z;
+
+    this.getContainerHtml().style.zIndex = z;
   }
 
   setXY(x, y) {
@@ -466,41 +533,24 @@ class GameObject {
     this.setZ(this.z - 1);
   }
 
-  right(px = 2) {
+  right(px = 1) {
     this.setX(this.x + px);
   }
 
-  left(px = 2) {
+  left(px = 1) {
     this.setX(this.x - px);
   }
 
-  up(px = 2) {
+  up(px = 1) {
     this.setY(this.y - px);
   }
 
-  down(px = 2) {
+  down(px = 1) {
     this.setY(this.y + px);
   }
-}
 
-class Character extends GameObject {
-  constructor(scene, name, age, items) {
-    const html = document.createElement("div");
-    html.classList.add("character");
-
-    super(scene, html);
-
-    this.name = name;
-    this.age = age;
-    this.items = items;
-  }
-
-  sayHello() {
-    alert(`Hello, my name is ${this.name}`);
-  }
-
-  getHtml() {
-    return this.html;
+  requestJump() {
+    return this.scene.requestJump(this);
   }
 }
 
@@ -770,28 +820,102 @@ class FollowCursorOnMoveControl extends AbstractFollowCursorControl {
 }
 
 class JumpYControl extends Control {
+  static INITIAL_SPAM_DELAY = 3;
+  static INITIAL_DURATION = 500;
+  static INITIAL_MAX_JUMPS = 1;
+  static INITIAL_VERTICAL_STEP = 3;
+
   constructor(object, active = false) {
     super(object, active);
 
-    this.duration = 300;
-    this.spamDelay = 1;
+    this.maxJumps = JumpYControl.INITIAL_MAX_JUMPS;
+    this.duration = JumpYControl.INITIAL_DURATION;
+    this.verticalStep = JumpYControl.INITIAL_VERTICAL_STEP;
+
+    this.spam1 = new Spam(() => {
+      this.jump(this.verticalStep);
+    }, JumpYControl.INITIAL_SPAM_DELAY);
+
+    this.spam2 = new Spam(() => {
+      this.jump(this.verticalStep / 2);
+    }, JumpYControl.INITIAL_SPAM_DELAY);
 
     this.init();
   }
 
   init() {
-    const objectJumpSpam = new Spam(() => {
-      this.object.up();
+    const keydownEvent = new KeyDownEvent(" ", () => this.handleJump());
+    this.appendEventToScene(keydownEvent);
+  }
+
+  async handleJump() {
+    const allowed = this.object.requestJump(this.maxJumps);
+    if (!allowed) return;
+
+    await this.spam1.start(this.duration * (3 / 4));
+    await this.spam2.start(this.duration * (1 / 4));
+  }
+
+  jump(step) {
+    this.object.up(step);
+  }
+
+  setDuration(duration) {
+    this.duration = duration;
+  }
+
+  setSpamDelay(spamDelay) {
+    this.spam.updateDelay(spamDelay);
+  }
+}
+
+class ADControl extends Control {
+  constructor(object, active = false) {
+    super(object, active);
+
+    const INITIAL_SPAM = 2;
+
+    this.spamDelay = INITIAL_SPAM;
+
+    this.goLeftSpam = new Spam(() => {
+      this.object.left();
+    }, this.spamDelay);
+    this.goRightSpam = new Spam(() => {
+      this.object.right();
     }, this.spamDelay);
 
-    this.events.push(
-      new KeyDownEvent(" ", () => objectJumpSpam.start(this.duration))
-    );
+    this.init();
+  }
 
-    for (const event of this.events) {
-      event.setActive(this.active);
-      this.object.scene.keyboard.addEvent(event);
-    }
+  init() {
+    const keyDownA = new KeyDownEvent("a", () => {
+      this.goLeftSpam.start();
+    });
+
+    const keyDownD = new KeyDownEvent("d", () => {
+      this.goRightSpam.start();
+    });
+
+    const keyUpA = new KeyUpEvent("a", () => {
+      this.goLeftSpam.stop();
+    });
+
+    const keyUpD = new KeyUpEvent("d", () => {
+      this.goRightSpam.stop();
+    });
+
+    this.appendEventToScene(keyDownA);
+    this.appendEventToScene(keyDownD);
+
+    this.appendEventToScene(keyUpA);
+    this.appendEventToScene(keyUpD);
+  }
+
+  updateSpamDelay(spamDelay) {
+    this.spamDelay = spamDelay;
+
+    this.goLeftSpam.updateDelay(spamDelay);
+    this.goRightSpam.updateDelay(spamDelay);
   }
 }
 
@@ -882,7 +1006,7 @@ class Spam {
     this.lastStopAfter = null;
   }
 
-  start(stopAfter = null) {
+  async start(stopAfter = null) {
     if (this.isRunning) return;
     this.isRunning = true;
     this.id = setInterval(this.callback, this.delay);
@@ -892,7 +1016,13 @@ class Spam {
       setTimeout(() => {
         this.stop();
       }, stopAfter);
+
+      await this.sleep(stopAfter);
     }
+  }
+
+  sleep(time) {
+    return new Promise((resolve) => setTimeout(() => resolve(), time));
   }
 
   updateDelay(delay) {

@@ -22,11 +22,23 @@
   width: 2rem;
   height: 2rem;
   border-radius: 100%;
-  background-color: red;
+  background-color: white;
 }
 
 .char-blue {
   background-color: blue;
+  width: 4rem;
+  height: 4rem;
+}
+
+.bar {
+  width: 100vw;
+  height: 1rem;
+  background-color: white;
+}
+
+.char-red {
+  background-color: red;
 }
 
 .scene {
