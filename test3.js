@@ -59,8 +59,15 @@ class Sphere extends GameObject {
 
   const sphere = new Sphere(scene);
   sphere.displayOnScene(300, 300, 0);
-  sphere.getWsadControl().setActive(true);
-  sphere.getJumpYControl().setActive(false);
+  sphere.getFollowCursorOnMoveControl().setActive(true);
+  sphere
+    .getFollowCursorOnMoveControl()
+    .setRadiusThreshold(sphere.getWidth() / 2);
+  sphere.setCollision(true);
+
+  const sphere2 = new Sphere(scene);
+  sphere2.displayOnScene(500, 300, 0);
+  sphere2.setCollision(true);
 
   const pressWToScare = new KeyDownEvent("w", () => {
     if (sphere.getY() > window.innerHeight * 2.5) {

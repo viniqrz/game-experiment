@@ -1,6 +1,8 @@
 class MainScene extends Scene {
   constructor(screen) {
     super(screen);
+
+    this.setWidth(window.innerWidth);
   }
 }
 
@@ -101,6 +103,8 @@ class Sphere extends GameObject {
 
   scene.getCamera().setAttachedObject(sphere);
 
+  scene.setClosedBorders(true);
+
   const changeLevelOnSpacePressEvent = new KeyDownEvent(" ", (event) => {
     const random = ["grass", "dirt", "sand", "snow"].filter(
       (s) => s !== ground.getType()
@@ -108,7 +112,5 @@ class Sphere extends GameObject {
     ground.setType(random);
   });
 
-  scene.keyboard.addEvent(changeLevelOnSpacePressEvent);
-
-  ground.setType("sand");
+  // scene.keyboard.addEvent(changeLevelOnSpacePressEvent);
 })();

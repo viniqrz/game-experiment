@@ -302,7 +302,17 @@ class Scene {
 
     this.setWidth(window.innerWidth);
     this.initGravity();
+
     this.camera = null;
+    this.closedBorders = true;
+  }
+
+  getClosedBorders() {
+    return this.closedBorders;
+  }
+
+  setClosedBorders(val) {
+    this.closedBorders = val;
   }
 
   setCamera(camera) {
@@ -317,7 +327,7 @@ class Scene {
     this.html.style.width = `${width}px`;
   }
 
-  #getWidth() {
+  getWidth() {
     return this.html.getBoundingClientRect().width;
   }
 
@@ -423,7 +433,38 @@ class Scene {
     return this.requestCoordinateUpdate(actor, isPositive, "Y");
   }
 
+  getBoundaries() {
+    return {
+      left: 0,
+      right: this.getWidth(),
+      top: 0,
+      bottom: this.getHeight(),
+    };
+  }
+
   requestCoordinateUpdate(actor, isPositive, type) {
+    if (this.closedBorders) {
+      const sceneBoundaries = this.getBoundaries();
+
+      if (type === "X") {
+        if (isPositive) {
+          if (actor.getX() + actor.getWidth() > sceneBoundaries.right)
+            return false;
+        } else {
+          if (actor.getX() < sceneBoundaries.left) return false;
+        }
+      }
+
+      if (type === "Y") {
+        if (isPositive) {
+          if (actor.getY() + actor.getHeight() > sceneBoundaries.bottom)
+            return false;
+        } else {
+          if (actor.getY() < sceneBoundaries.top) return false;
+        }
+      }
+    }
+
     if (!actor.collision) return true;
 
     const objects = this.getObjects();
@@ -652,7 +693,7 @@ class GameObject {
   }
 
   getBoundaries() {
-    const { left, right, top, bottom } =
+    const { left, right, top, bottom, width } =
       this.getContainerHtml().getBoundingClientRect();
     return {
       left,
@@ -924,12 +965,15 @@ class DragAndDropControl extends Control {
 }
 
 class AbstractFollowCursorControl extends Control {
+  static INITIAL_RADIUS_THRESHOLD = 2;
+
   constructor(object, active = false) {
     super(object, active);
 
     this.lastCursorX = 0;
     this.lastCursorY = 0;
     this.smoothness = 4;
+    this.radiusThreshold = AbstractFollowCursorControl.INITIAL_RADIUS_THRESHOLD;
 
     this.rightSpam = new Spam(() => {
       if (this.getCursorDistancesReferentToObject().right > 0) {
@@ -963,6 +1007,14 @@ class AbstractFollowCursorControl extends Control {
 
   // abstract
   init() {}
+
+  setRadiusThreshold(radiusThreshold) {
+    this.radiusThreshold = radiusThreshold;
+  }
+
+  getRadiusThreshold() {
+    return this.radiusThreshold;
+  }
 
   setSmoothness(smoothness) {
     this.smoothness = smoothness;
@@ -998,12 +1050,10 @@ class AbstractFollowCursorControl extends Control {
   follow() {
     const distances = this.getCursorDistancesReferentToObject();
 
-    const RADIUS_THRESHOLD = 2;
-
-    if (distances.left > RADIUS_THRESHOLD) this.leftSpam.start();
-    if (distances.right > RADIUS_THRESHOLD) this.rightSpam.start();
-    if (distances.top > RADIUS_THRESHOLD) this.upSpam.start();
-    if (distances.bottom > RADIUS_THRESHOLD) this.downSpam.start();
+    if (distances.left > this.radiusThreshold) this.leftSpam.start();
+    if (distances.right > this.radiusThreshold) this.rightSpam.start();
+    if (distances.top > this.radiusThreshold) this.upSpam.start();
+    if (distances.bottom > this.radiusThreshold) this.downSpam.start();
   }
 }
 
