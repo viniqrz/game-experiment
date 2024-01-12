@@ -49,7 +49,7 @@ class Bar extends GameObject {
   const bar1 = new Bar(scene, "green");
   const bar2 = new Bar(scene, "brown");
 
-  screen.setScene(scene);
+  screen.setActiveScene(scene);
 
   scene.addObject(char1);
   scene.addObject(char2);

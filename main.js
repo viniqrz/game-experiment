@@ -1,28 +1,29 @@
 const main = document.getElementById("main");
 
-const setElementChildren = (element, children) => {
-  element.innerHTML = "";
-  children.forEach((child) => element.appendChild(child));
-};
-
 class GameScreen {
   constructor() {
+    if (window.gameScreen) return window.gameScreen;
+
     this.width = window.innerWidth;
     this.height = window.innerHeight;
 
     this.html = document.createElement("div");
     this.html.classList.add("screen");
 
-    setElementChildren(main, [this.html]);
+    main.innerHTML = "";
+    main.appendChild(this.html);
+
+    window.gameScreen = this;
   }
 
   getScreenSize() {
     return { width: this.width, height: this.height };
   }
 
-  setScene(scene) {
+  setActiveScene(scene) {
     this.scene = scene;
-    setElementChildren(this.html, [this.scene.getHtml()]);
+    this.html.innerHTML = "";
+    this.html.appendChild(this.scene.getHtml());
   }
 }
 
@@ -192,18 +193,171 @@ class KeyboardEventsList {
   }
 }
 
+class Camera {
+  constructor() {
+    this.x = 0;
+    this.y = 0;
+    this.attachedObject = null;
+  }
+
+  getAttachedObject() {
+    return this.attachedObject;
+  }
+
+  setAttachedObject(obj) {
+    this.attachedObject = obj;
+  }
+
+  getX() {
+    return this.x;
+  }
+
+  moveX(diff) {
+    this.setX(this.x + diff);
+  }
+
+  setX(x) {
+    if (x < 0 || x >= document.body.scrollWidth) return;
+    this.x = x;
+    window.scrollTo(this.x, this.y);
+  }
+
+  moveY(diff) {
+    this.setY(this.y + diff);
+  }
+
+  getY() {
+    return this.y;
+  }
+
+  setY(y) {
+    if (y < 0 || y >= document.body.scrollHeight) return;
+    this.y = y;
+    window.scrollTo(this.x, this.y);
+  }
+
+  checkIfObjectIsBeforeXAxisCenter(object) {
+    const isBeforeCenter =
+      object.getX() + object.getWidth() / 2 - this.x < window.innerWidth / 2;
+    return isBeforeCenter;
+  }
+
+  checkIfObjectIsAfterXAxisCenter(object) {
+    const isAfterCenter =
+      object.getX() + object.getWidth() / 2 - this.x > window.innerWidth / 2;
+    return isAfterCenter;
+  }
+
+  checkIfObjectIsBeforeYAxisCenter(object) {
+    const isBeforeCenter =
+      object.getY() + object.getHeight() / 2 - this.y < window.innerHeight / 2;
+    return isBeforeCenter;
+  }
+
+  checkIfObjectIsAfterYAxisCenter(object) {
+    const isAfterCenter =
+      object.getY() + object.getHeight() / 2 - this.y > window.innerHeight / 2;
+    return isAfterCenter;
+  }
+
+  setXY(x, y) {
+    this.setX(x);
+    this.setY(y);
+  }
+
+  right(px = 1) {
+    this.setX(this.x + px);
+  }
+
+  left(px = 1) {
+    this.setX(this.x - px);
+  }
+
+  up(px = 1) {
+    this.setY(this.y - px);
+  }
+
+  down(px = 1) {
+    this.setY(this.y + px);
+  }
+}
+
 class Scene {
   constructor() {
     this.objects = [];
 
     this.html = document.createElement("div");
     this.html.classList.add("scene");
+    this.html.style.overflow = "hidden";
+
     this.mouse = new MouseEventsList(window);
     this.keyboard = new KeyboardEventsList(window);
 
     document.addEventListener("contextmenu", (event) => event.preventDefault());
+    window.addEventListener("keydown", function (e) {
+      if (e.key == " " && e.target == document.body) {
+        e.preventDefault();
+      }
+    });
 
+    this.setWidth(window.innerWidth);
     this.initGravity();
+    this.camera = null;
+  }
+
+  setCamera(camera) {
+    this.camera = camera;
+  }
+
+  getCamera() {
+    return this.camera;
+  }
+
+  setWidth(width) {
+    this.html.style.width = `${width}px`;
+  }
+
+  #getWidth() {
+    return this.html.getBoundingClientRect().width;
+  }
+
+  getHeight() {
+    return this.html.getBoundingClientRect().height;
+  }
+
+  setHeight(height) {
+    this.html.style.height = `${height}px`;
+  }
+
+  setBackgroundImage(url, options) {
+    this.setBackground(`url("${url}")`, options);
+  }
+
+  setBackground(background, options = {}) {
+    options = {
+      ...{
+        repeat: "repeat",
+        size: "contain",
+        attachment: "fixed",
+      },
+      ...options,
+    };
+    this.html.style.background = background;
+    this.html.style.backgroundRepeat = options.repeat;
+    this.html.style.backgroundSize = options.size;
+    this.html.style.backgroundAttachment = options.attachment;
+  }
+
+  getBackground(background) {
+    return this.html.style.background;
+  }
+
+  setBackgroundColor(color) {
+    this.html.style.backgroundColor = color;
+  }
+
+  getBackgroundColor() {
+    return this.html.style.backgroundColor;
   }
 
   addObject(gameObject) {
@@ -374,6 +528,36 @@ class Scene {
     const objectBelow = this.findObjectBelowWithinRange(actor);
     return Boolean(objectBelow);
   }
+
+  notifyXChange(actor, diff) {
+    this.moveAttachedCameraX(actor, diff);
+  }
+
+  moveAttachedCameraX(actor, diff) {
+    if (!actor.checkIfHasCameraAttached()) return;
+
+    if (diff > 0 && this.getCamera().checkIfObjectIsBeforeXAxisCenter(actor))
+      return;
+    if (diff < 0 && this.getCamera().checkIfObjectIsAfterXAxisCenter(actor))
+      return;
+
+    this.getCamera().moveX(diff);
+  }
+
+  notifyYChange(actor, diff) {
+    this.moveAttachedCameraY(actor, diff);
+  }
+
+  moveAttachedCameraY(actor, diff) {
+    if (!actor.checkIfHasCameraAttached()) return;
+
+    if (diff > 0 && this.getCamera().checkIfObjectIsBeforeYAxisCenter(actor))
+      return;
+    if (diff < 0 && this.getCamera().checkIfObjectIsAfterYAxisCenter(actor))
+      return;
+
+    this.getCamera().moveY(diff);
+  }
 }
 
 class GameObject {
@@ -392,6 +576,7 @@ class GameObject {
 
     this.containerHtml.id = this.ID;
     this.containerHtml.style.position = "absolute";
+    this.containerHtml.style.overflow = "hidden";
     this.containerHtml.draggable = "false";
 
     this.x = 0;
@@ -411,6 +596,43 @@ class GameObject {
 
     this.gravity = false;
     this.gravityIntensity = 1;
+  }
+
+  checkIfHasCameraAttached() {
+    return (
+      this.scene.getCamera() &&
+      this.scene.getCamera().getAttachedObject() &&
+      this.scene.getCamera().getAttachedObject().ID === this.ID
+    );
+  }
+
+  getWidth() {
+    return this.textureHtml.getBoundingClientRect().width;
+  }
+
+  setWidth(width) {
+    this.textureHtml.style.width = `${width}px`;
+  }
+
+  getHeight() {
+    return this.textureHtml.getBoundingClientRect().height;
+  }
+
+  setHeight(height) {
+    this.textureHtml.style.height = `${height}px`;
+  }
+
+  setTextureHeight(height) {
+    this.textureHtml.style.height = `${height}px`;
+  }
+
+  setTextureWidth(width) {
+    this.textureHtml.style.width = `${width}px`;
+  }
+
+  displayOnScene(initX = 0, initY = 0, initZ = 0) {
+    this.scene.addObject(this);
+    this.setXYZ(initX, initY, initZ);
   }
 
   getContainerHtml() {
@@ -488,24 +710,46 @@ class GameObject {
     return this.dragAndDropControl;
   }
 
+  getX() {
+    return this.x;
+  }
+
   setX(x) {
-    const isPositive = this.x < x;
+    const diff = x - this.x;
+    const isPositive = diff > 0;
     const allowed = this.scene.requestXUpdate(this, isPositive);
     if (!allowed) return;
 
     this.x = x;
 
     this.getContainerHtml().style.left = `${x}px`;
+
+    this.notifyXChange(diff);
+  }
+
+  notifyXChange(diff) {
+    this.scene.notifyXChange(this, diff);
+  }
+
+  getY() {
+    return this.y;
   }
 
   setY(y) {
-    const isPositive = this.y < y;
+    const diff = y - this.y;
+    const isPositive = diff > 0;
     const allowed = this.scene.requestYUpdate(this, isPositive);
     if (!allowed) return;
 
     this.y = y;
 
     this.getContainerHtml().style.top = `${y}px`;
+
+    this.notifyYChange(diff);
+  }
+
+  notifyYChange(diff) {
+    this.scene.notifyYChange(this, diff);
   }
 
   setZ(z) {

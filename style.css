@@ -2,6 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-user-drag: none;
 }
 
 .screen {
@@ -14,13 +15,13 @@
   height: 100vh;
 }
 
-/* .game-object {
-  
-} */
+body {
+  /* overflow-y: hidden; */
+}
 
 .character {
-  width: 2rem;
-  height: 2rem;
+  width: 4rem;
+  height: 4rem;
   border-radius: 100%;
   background-color: white;
 }
@@ -49,11 +50,44 @@
 }
 
 .scene {
-  background-color: lightskyblue;
   height: 100%;
-  width: 100%;
+  background-color: rgb(60, 60, 60);
+  overflow: hidden;
 }
 
-* {
-  -webkit-user-drag: none;
+.ground {
+  height: 4rem;
+  width: 200vw;
+}
+
+.surface {
+  height: 1rem;
+}
+
+.grass {
+  background-color: limegreen;
+}
+
+.snow {
+  background-color: white;
+}
+
+.sand {
+  background-color: khaki;
+}
+
+.dirt {
+  background-color: rgb(126, 89, 71);
+}
+
+.terrain {
+  height: 3rem;
+}
+
+.sphere {
+  border-radius: 100%;
+  height: 2rem;
+  width: 2rem;
+  background-color: yellow;
+  border: 2px solid black;
 }
