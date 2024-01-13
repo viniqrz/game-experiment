@@ -2,57 +2,7 @@ class MainScene extends Scene {
   constructor(screen) {
     super(screen);
 
-    this.setWidth(window.innerWidth);
-  }
-}
-
-class Ground extends GameObject {
-  static INITIAL_TYPE = "grass";
-
-  constructor(scene) {
-    const textureHtml = Ground.generateHtml(Ground.INITIAL_TYPE);
-    super(scene, textureHtml);
-
-    this.type = Ground.INITIAL_TYPE;
-  }
-
-  /**
-   * @param {string} type - "grass" | "dirt" | "sand" | "snow"
-   * @returns {HTMLDivElement}
-   * @static
-   */
-  static generateHtml(type = "grass") {
-    const html = document.createElement("div");
-    html.classList.add("ground");
-
-    const surface = document.createElement("div");
-    surface.classList.add("surface");
-    surface.classList.add(type);
-    html.appendChild(surface);
-
-    const terrain = document.createElement("div");
-    terrain.classList.add("terrain");
-
-    const terrainTextureMap = {
-      grass: "dirt",
-      dirt: "dirt",
-      sand: "sand",
-      snow: "dirt",
-    };
-    terrain.classList.add(terrainTextureMap[type]);
-
-    html.appendChild(terrain);
-
-    return html;
-  }
-
-  setType(type) {
-    this.type = type;
-    this.updateTextureHtml(Ground.generateHtml(type));
-  }
-
-  getType() {
-    return this.type;
+    this.setHeight(window.innerHeight);
   }
 }
 
@@ -70,6 +20,33 @@ class Sphere extends GameObject {
   }
 }
 
+class GrassChunk extends PlatformChunk {
+  constructor(surfaceHeight = 16, dirtHeight = 96) {
+    super(
+      GrassChunk.generateHtml(surfaceHeight, dirtHeight),
+      surfaceHeight + dirtHeight
+    );
+  }
+
+  static generateHtml(surfaceHeight, dirtHeight) {
+    const html = document.createElement("div");
+
+    const surface = document.createElement("div");
+    surface.style.background = "limegreen";
+    surface.style.height = `${surfaceHeight}px`;
+
+    html.appendChild(surface);
+
+    const terrain = document.createElement("div");
+    terrain.style.background = "rgb(126, 89, 71)";
+    terrain.style.height = `${dirtHeight}px`;
+
+    html.appendChild(terrain);
+
+    return html;
+  }
+}
+
 (function init() {
   const screen = new GameScreen();
   const scene = new MainScene(screen);
@@ -77,21 +54,34 @@ class Sphere extends GameObject {
 
   scene.setCamera(camera);
 
+  scene.setClosedBorders(true);
   scene.setBackgroundColor("skyblue");
 
   screen.setActiveScene(scene);
 
-  const ground = new Ground(scene);
-  ground.displayOnScene(0, 0, 0);
-  ground.setY(
-    window.innerHeight -
-      ground.getContainerHtml().getBoundingClientRect().height
-  );
-  ground.setCollision(true);
+  const platform = new Platform(scene);
+  platform.renderNextChunk(new GrassChunk());
+  platform.displayOnScene(0, window.innerHeight, 0);
+  platform.setCollision(true);
+
+  // const ground = new Ground(scene);
+  // ground.displayOnScene(0, window.innerHeight - ground.getHeight(), 0);
+  // ground.setCollision(true);
 
   const sphere = new Sphere(scene);
   sphere.displayOnScene(0, 0, 0);
   sphere.getAdControl().setActive(true);
+  sphere.getAdControl().addControlEventListener(
+    new ControlEventListener(StatusActiveControlEvent, () => {
+      sphere.setHeight(32 * 0.8);
+    })
+  );
+  sphere.getAdControl().addControlEventListener(
+    new ControlEventListener(StatusInactiveControlEvent, () => {
+      sphere.up(32 * 0.2);
+      sphere.setHeight(32 * 1);
+    })
+  );
   sphere.getJumpYControl().setActive(true);
   sphere.setGravity(true);
   sphere.setCollision(true);
@@ -103,14 +93,5 @@ class Sphere extends GameObject {
 
   scene.getCamera().setAttachedObject(sphere);
 
-  scene.setClosedBorders(true);
-
-  const changeLevelOnSpacePressEvent = new KeyDownEvent(" ", (event) => {
-    const random = ["grass", "dirt", "sand", "snow"].filter(
-      (s) => s !== ground.getType()
-    )[Math.floor(Math.random() * 3)];
-    ground.setType(random);
-  });
-
-  // scene.keyboard.addEvent(changeLevelOnSpacePressEvent);
+  platform.renderNextChunk(new GrassChunk());
 })();

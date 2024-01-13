@@ -647,6 +647,14 @@ class GameObject {
     );
   }
 
+  setContainerWidth(width) {
+    this.containerHtml.style.width = `${width}px`;
+  }
+
+  getContainerWidth() {
+    return this.containerHtml.getBoundingClientRect().width;
+  }
+
   getWidth() {
     return this.textureHtml.getBoundingClientRect().width;
   }
@@ -661,14 +669,6 @@ class GameObject {
 
   setHeight(height) {
     this.textureHtml.style.height = `${height}px`;
-  }
-
-  setTextureHeight(height) {
-    this.textureHtml.style.height = `${height}px`;
-  }
-
-  setTextureWidth(width) {
-    this.textureHtml.style.width = `${width}px`;
   }
 
   displayOnScene(initX = 0, initY = 0, initZ = 0) {
@@ -839,11 +839,88 @@ class GameObject {
   }
 }
 
+class PlatformChunk {
+  constructor(html, height) {
+    this.html = html;
+    this.width = html.getBoundingClientRect().width;
+    this.height = height;
+  }
+
+  getHeight() {
+    return this.height;
+  }
+
+  setWidth(width) {
+    this.width = width;
+    this.html.style.width = `${width}px`;
+  }
+}
+
+class Platform extends GameObject {
+  static PLATFORM_CLASS_NAME = "platform";
+  static PLATFORM_CHUNK_SIZE = window.innerWidth;
+
+  constructor(scene) {
+    const container = document.createElement("div");
+    container.className = Platform.PLATFORM_CLASS_NAME;
+    container.style.overflow = "hidden";
+    container.style.display = "flex";
+
+    super(scene, container);
+
+    this.chunksContainer = container;
+    this.chunkSize = Platform.PLATFORM_CHUNK_SIZE;
+    this.chunks = [];
+    this.width = 0;
+  }
+
+  renderNextChunk(chunk) {
+    chunk.setWidth(this.getChunkSize());
+
+    this.width = this.width + this.getChunkSize();
+    this.scene.setWidth(this.width);
+
+    this.chunks.push(chunk);
+    this.chunksContainer.append(chunk.html);
+  }
+
+  getChunkSize() {
+    return this.chunkSize;
+  }
+
+  setChunkSize(chunkSize) {
+    this.chunkSize = chunkSize;
+  }
+}
+
+class ControlEvent {}
+class StatusActiveControlEvent extends ControlEvent {}
+class StatusInactiveControlEvent extends ControlEvent {}
+
+class ControlEventListener {
+  constructor(event, callback) {
+    this.event = event;
+    this.callback = callback;
+  }
+}
+
 class Control {
   constructor(object, active = false) {
     this.active = active;
     this.object = object;
     this.events = [];
+    this.controlListeners = [];
+  }
+
+  addControlEventListener(callback) {
+    this.controlListeners.push(callback);
+  }
+
+  notify(event) {
+    this.controlListeners.forEach((listener) => {
+      console.log(listener.event.name, event.name);
+      if (event.name === listener.event.name) listener.callback();
+    });
   }
 
   getActive() {
@@ -1171,11 +1248,18 @@ class ADControl extends Control {
 
     this.spamDelay = INITIAL_SPAM;
 
+    this.isRunning = false;
+
+    this.isKeyDPressed = false;
+    this.isKeyAPressed = false;
+
     this.goLeftSpam = new Spam(() => {
       this.object.left();
+      this.setIsRunning(true);
     }, this.spamDelay);
     this.goRightSpam = new Spam(() => {
       this.object.right();
+      this.setIsRunning(true);
     }, this.spamDelay);
 
     this.init();
@@ -1183,19 +1267,25 @@ class ADControl extends Control {
 
   init() {
     const keyDownA = new KeyDownEvent("a", () => {
+      this.isKeyAPressed = true;
       this.goLeftSpam.start();
     });
 
     const keyDownD = new KeyDownEvent("d", () => {
+      this.isKeyDPressed = true;
       this.goRightSpam.start();
     });
 
     const keyUpA = new KeyUpEvent("a", () => {
       this.goLeftSpam.stop();
+      this.isKeyAPressed = false;
+      if (!this.isKeyDPressed) this.setIsRunning(false);
     });
 
     const keyUpD = new KeyUpEvent("d", () => {
       this.goRightSpam.stop();
+      this.isKeyDPressed = false;
+      if (!this.isKeyAPressed) this.setIsRunning(false);
     });
 
     this.appendEventToScene(keyDownA);
@@ -1203,6 +1293,16 @@ class ADControl extends Control {
 
     this.appendEventToScene(keyUpA);
     this.appendEventToScene(keyUpD);
+  }
+
+  setIsRunning(val) {
+    if (val === this.isRunning) return;
+    this.isRunning = val;
+    this.notify(val ? StatusActiveControlEvent : StatusInactiveControlEvent);
+  }
+
+  getIsRunning() {
+    return this.isRunning;
   }
 
   updateSpamDelay(spamDelay) {
