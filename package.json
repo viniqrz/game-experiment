@@ -1,0 +1,21 @@
+{
+  "name": "game-experiment",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:viniqrz/game-experiment.git",
+  "author": "vini <viniderp@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "start": "esbuild src/index.ts --bundle --minify --sourcemap --target=es2015 --outfile=dist/index.js --watch --servedir=dist --serve=localhost:5000",
+    "build": "esbuild src/index.ts --bundle --minify --sourcemap --target=es2015 --outfile=dist/index.js"
+  },
+  "type": "module",
+  "devDependencies": {
+    "esbuild": "^0.19.11",
+    "serve": "^14.2.1"
+  },
+  "dependencies": {
+    "typescript": "^5.3.3"
+  }
+}

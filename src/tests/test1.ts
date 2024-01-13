@@ -1,3 +1,5 @@
+import { GameObject, GameScreen, MouseDownEvent, Scene } from "../api";
+
 class Character extends GameObject {
   constructor(scene, name, age, items) {
     const html = Character.generateHtml("red");
@@ -39,7 +41,7 @@ class Bar extends GameObject {
   }
 }
 
-(function init() {
+export function init() {
   const screen = new GameScreen();
   const scene = new Scene();
   const char1 = new Character(scene, "Robert");
@@ -91,4 +93,4 @@ class Bar extends GameObject {
     });
     char.mouse.addEvent(clickToGetHello);
   });
-})();
+}

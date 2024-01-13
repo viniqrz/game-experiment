@@ -1,6 +1,8 @@
+import { Camera, GameObject, GameScreen, KeyDownEvent, Scene } from "../api";
+
 class MainScene extends Scene {
-  constructor(screen) {
-    super(screen);
+  constructor() {
+    super();
 
     this.setHeight(window.innerHeight * 3);
     this.setWidth(window.innerWidth * 3);
@@ -48,7 +50,7 @@ class Sphere extends GameObject {
   }
 }
 
-(function init() {
+export function init() {
   const screen = new GameScreen();
   const scene = new MainScene();
   const camera = new Camera();
@@ -78,4 +80,4 @@ class Sphere extends GameObject {
   scene.keyboard.addEvent(pressWToScare);
 
   camera.setAttachedObject(sphere);
-})();
+}

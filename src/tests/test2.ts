@@ -1,13 +1,25 @@
+import {
+  Camera,
+  ControlEventListener,
+  GameObject,
+  GameScreen,
+  Platform,
+  PlatformChunk,
+  Scene,
+  StatusActiveControlEvent,
+  StatusInactiveControlEvent,
+} from "../api";
+
 class MainScene extends Scene {
-  constructor(screen) {
-    super(screen);
+  constructor() {
+    super();
 
     this.setHeight(window.innerHeight);
   }
 }
 
 class Sphere extends GameObject {
-  constructor(scene) {
+  constructor(scene: Scene) {
     const html = Sphere.generateHtml();
 
     super(scene, html);
@@ -28,7 +40,7 @@ class GrassChunk extends PlatformChunk {
     );
   }
 
-  static generateHtml(surfaceHeight, dirtHeight) {
+  static generateHtml(surfaceHeight: number, dirtHeight: number) {
     const html = document.createElement("div");
 
     const surface = document.createElement("div");
@@ -47,9 +59,9 @@ class GrassChunk extends PlatformChunk {
   }
 }
 
-(function init() {
+export function init() {
   const screen = new GameScreen();
-  const scene = new MainScene(screen);
+  const scene = new MainScene();
   const camera = new Camera();
 
   scene.setCamera(camera);
@@ -60,7 +72,7 @@ class GrassChunk extends PlatformChunk {
   screen.setActiveScene(scene);
 
   const platform = new Platform(scene);
-  platform.renderNextChunk(new GrassChunk());
+  platform.renderNextChunk(new GrassChunk(5));
   platform.renderNextChunk(new GrassChunk(32));
   platform.renderNextChunk(new GrassChunk());
   platform.renderNextChunk(new GrassChunk());
@@ -96,4 +108,4 @@ class GrassChunk extends PlatformChunk {
   sphere2.setGravity(true);
 
   scene.getCamera().setAttachedObject(sphere);
-})();
+}
