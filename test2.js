@@ -64,27 +64,28 @@ class GrassChunk extends PlatformChunk {
   platform.displayOnScene(0, window.innerHeight, 0);
   platform.setCollision(true);
 
-  // const ground = new Ground(scene);
-  // ground.displayOnScene(0, window.innerHeight - ground.getHeight(), 0);
-  // ground.setCollision(true);
-
   const sphere = new Sphere(scene);
   sphere.displayOnScene(0, 0, 0);
   sphere.getAdControl().setActive(true);
-  sphere.getAdControl().addControlEventListener(
-    new ControlEventListener(StatusActiveControlEvent, () => {
-      sphere.setHeight(32 * 0.8);
-    })
-  );
-  sphere.getAdControl().addControlEventListener(
-    new ControlEventListener(StatusInactiveControlEvent, () => {
-      sphere.up(32 * 0.2);
-      sphere.setHeight(32 * 1);
-    })
-  );
   sphere.getJumpYControl().setActive(true);
   sphere.setGravity(true);
   sphere.setCollision(true);
+
+  (() => {
+    const FACTOR = 8;
+
+    sphere.getAdControl().addControlEventListener(
+      new ControlEventListener(StatusActiveControlEvent, () => {
+        sphere.setHeight(32 * (FACTOR / 10));
+      })
+    );
+    sphere.getAdControl().addControlEventListener(
+      new ControlEventListener(StatusInactiveControlEvent, () => {
+        sphere.up(32 * ((10 - FACTOR) / 10));
+        sphere.setHeight(32 * 1);
+      })
+    );
+  })();
 
   const sphere2 = new Sphere(scene);
   sphere2.displayOnScene(500, 300, 0);
