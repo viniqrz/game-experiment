@@ -72,7 +72,7 @@ export function init() {
   screen.setActiveScene(scene);
 
   const platform = new Platform(scene);
-  platform.renderNextChunk(new GrassChunk(5));
+  platform.renderNextChunk(new GrassChunk(12));
   platform.renderNextChunk(new GrassChunk(32));
   platform.renderNextChunk(new GrassChunk());
   platform.renderNextChunk(new GrassChunk());

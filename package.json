@@ -7,15 +7,15 @@
   "license": "MIT",
   "scripts": {
     "check-types": "tsc --noEmit",
-    "start": "esbuild src/index.ts --bundle --minify --sourcemap --target=es2015 --outfile=dist/index.js --watch --servedir=dist --serve=localhost:5000",
+    "dev": "tsc --noEmit && node scripts/dev.js",
     "build": "esbuild src/index.ts --bundle --minify --sourcemap --target=es2015 --outfile=dist/index.js"
   },
   "type": "module",
   "devDependencies": {
-    "esbuild": "^0.19.11",
-    "serve": "^14.2.1"
+    "esbuild": "^0.19.11"
   },
   "dependencies": {
+    "live-server": "^1.2.2",
     "typescript": "^5.3.3"
   }
 }

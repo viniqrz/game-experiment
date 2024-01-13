@@ -1,210 +1,58 @@
+import { KeyboardEventsList } from "./events/keyboard";
+import { MouseEventsList } from "./events/mouse";
+
 const main = document.getElementById("main");
 
 export class GameScreen {
+  width = window.innerWidth;
+  height = window.innerHeight;
+
+  html = GameScreen.GenerateHtml();
+  scene?: Scene;
+
   constructor() {
+    //@ts-ignore
     if (window.gameScreen) return window.gameScreen;
 
     this.width = window.innerWidth;
     this.height = window.innerHeight;
 
-    this.html = document.createElement("div");
-    this.html.classList.add("screen");
+    main!.innerHTML = "";
+    main!.appendChild(this.html);
 
-    main.innerHTML = "";
-    main.appendChild(this.html);
-
+    //@ts-ignore
     window.gameScreen = this;
+  }
+
+  static GenerateHtml() {
+    const html = document.createElement("div");
+    html.classList.add("screen");
+    return html;
   }
 
   getScreenSize() {
     return { width: this.width, height: this.height };
   }
 
-  setActiveScene(scene) {
+  setActiveScene(scene: Scene) {
     this.scene = scene;
     this.html.innerHTML = "";
     this.html.appendChild(this.scene.getHtml());
   }
 }
 
-export class GameEvent {
-  constructor(callback, type, active = true) {
-    this.callback = callback;
-    this.type = type;
-    this.active = active;
-  }
-
-  setActive(active) {
-    this.active = active;
-  }
-}
-
-export class MouseEvent extends GameEvent {
-  constructor(callback, type) {
-    super(callback, type);
-  }
-}
-
-export class KeyboardEvent extends GameEvent {
-  constructor(callback, key, type) {
-    super(callback, type);
-    this.key = key;
-  }
-}
-
-export class KeyDownEvent extends KeyboardEvent {
-  constructor(key, callback) {
-    super(callback, key, "keydown");
-    this.type = "keydown";
-  }
-}
-
-export class KeyUpEvent extends KeyboardEvent {
-  constructor(key, callback) {
-    super(callback, key, "keyup");
-    this.type = "keyup";
-  }
-}
-
-export class MouseDownEvent extends MouseEvent {
-  constructor(callback) {
-    super(callback, "mousedown");
-    this.type = "mousedown";
-  }
-}
-
-export class MouseUpEvent extends MouseEvent {
-  constructor(callback) {
-    super(callback, "mouseup");
-    this.type = "mouseup";
-  }
-}
-
-export class MouseMoveEvent extends MouseEvent {
-  constructor(callback) {
-    super(callback, "mousemove");
-    this.type = "mousemove";
-  }
-}
-
-export class MouseEnterEvent extends MouseEvent {
-  constructor(callback) {
-    super(callback, "mouseenter");
-    this.type = "mouseenter";
-  }
-}
-
-export class MouseLeaveEvent extends MouseEvent {
-  constructor(callback) {
-    super(callback, "mouseleave");
-    this.type = "mouseleave";
-  }
-}
-
-export class MouseClickEvent extends MouseEvent {
-  constructor(callback) {
-    super(callback, "click");
-    this.type = "click";
-  }
-}
-
-export class MouseEventsList {
-  constructor(parentNode) {
-    this.parentNode = parentNode;
-    this.events = [];
-    this.init();
-  }
-
-  init() {
-    this.typesCallbacks = new Map();
-
-    this.typesCallbacks.set(new MouseDownEvent().type, []);
-    this.typesCallbacks.set(new MouseMoveEvent().type, []);
-    this.typesCallbacks.set(new MouseUpEvent().type, []);
-    this.typesCallbacks.set(new MouseEnterEvent().type, []);
-    this.typesCallbacks.set(new MouseLeaveEvent().type, []);
-    this.typesCallbacks.set(new MouseClickEvent().type, []);
-
-    for (const [type, callbacks] of this.typesCallbacks) {
-      this.parentNode.addEventListener(type, (e) => {
-        for (const callback of callbacks) {
-          callback(e);
-        }
-      });
-    }
-  }
-
-  getEvents() {
-    return this.events;
-  }
-
-  addEvent(event) {
-    this.events.push(event);
-    this.typesCallbacks.get(event.type).push((e) => {
-      if (event.active) event.callback(e);
-    });
-  }
-}
-
-export class KeyboardEventsList {
-  constructor(parentNode) {
-    this.parentNode = parentNode;
-    this.events = [];
-
-    this.init();
-  }
-
-  init() {
-    const KEYS = ["w", "s", "a", "d", " "];
-    const TYPES = [new KeyDownEvent().type, new KeyUpEvent().type];
-
-    this.typesCallbacks = new Map();
-
-    for (const type of TYPES) {
-      this.typesCallbacks.set(type, new Map());
-      for (const key of KEYS) {
-        this.typesCallbacks.get(type).set(key, []);
-      }
-    }
-
-    for (const [type, keys] of this.typesCallbacks) {
-      this.parentNode.addEventListener(type, (e) => {
-        console.log(e.key);
-        for (const [key, events] of keys) {
-          if (key === e.key) {
-            for (const event of events) {
-              if (event.active) {
-                event.callback(e);
-              }
-            }
-          }
-        }
-      });
-    }
-  }
-
-  getEvents() {
-    return this.events;
-  }
-
-  addEvent(event) {
-    this.events.push(event);
-    this.typesCallbacks.get(event.type).get(event.key).push(event);
-  }
-}
-
 export class Camera {
-  constructor() {
-    this.x = 0;
-    this.y = 0;
-    this.attachedObject = null;
-  }
+  constructor(
+    private x = 0,
+    private y = 0,
+    private attachedObject: GameObject | null = null
+  ) {}
 
   getAttachedObject() {
     return this.attachedObject;
   }
 
-  setAttachedObject(obj) {
+  setAttachedObject(obj: GameObject | null) {
     this.attachedObject = obj;
   }
 
@@ -212,17 +60,17 @@ export class Camera {
     return this.x;
   }
 
-  moveX(diff) {
+  moveX(diff: number) {
     this.setX(this.x + diff);
   }
 
-  setX(x) {
+  setX(x: number) {
     if (x < 0 || x >= document.body.scrollWidth) return;
     this.x = x;
     window.scrollTo(this.x, this.y);
   }
 
-  moveY(diff) {
+  moveY(diff: number) {
     this.setY(this.y + diff);
   }
 
@@ -230,37 +78,37 @@ export class Camera {
     return this.y;
   }
 
-  setY(y) {
+  setY(y: number) {
     if (y < 0 || y >= document.body.scrollHeight) return;
     this.y = y;
     window.scrollTo(this.x, this.y);
   }
 
-  checkIfObjectIsBeforeXAxisCenter(object) {
+  checkIfObjectIsBeforeXAxisCenter(object: GameObject) {
     const isBeforeCenter =
       object.getX() + object.getWidth() / 2 - this.x < window.innerWidth / 2;
     return isBeforeCenter;
   }
 
-  checkIfObjectIsAfterXAxisCenter(object) {
+  checkIfObjectIsAfterXAxisCenter(object: GameObject) {
     const isAfterCenter =
       object.getX() + object.getWidth() / 2 - this.x > window.innerWidth / 2;
     return isAfterCenter;
   }
 
-  checkIfObjectIsBeforeYAxisCenter(object) {
+  checkIfObjectIsBeforeYAxisCenter(object: GameObject) {
     const isBeforeCenter =
       object.getY() + object.getHeight() / 2 - this.y < window.innerHeight / 2;
     return isBeforeCenter;
   }
 
-  checkIfObjectIsAfterYAxisCenter(object) {
+  checkIfObjectIsAfterYAxisCenter(object: GameObject) {
     const isAfterCenter =
       object.getY() + object.getHeight() / 2 - this.y > window.innerHeight / 2;
     return isAfterCenter;
   }
 
-  setXY(x, y) {
+  setXY(x: number, y: number) {
     this.setX(x);
     this.setY(y);
   }
@@ -283,6 +131,13 @@ export class Camera {
 }
 
 export class Scene {
+  objects: GameObject[];
+  html: HTMLElement;
+  mouse: MouseEventsList;
+  keyboard: KeyboardEventsList;
+  camera: Camera | null;
+  closedBorders: boolean;
+
   constructor() {
     this.objects = [];
 
@@ -291,6 +146,8 @@ export class Scene {
     this.html.style.overflow = "hidden";
 
     this.mouse = new MouseEventsList(window);
+
+    //@ts-ignore
     this.keyboard = new KeyboardEventsList(window);
 
     document.addEventListener("contextmenu", (event) => event.preventDefault());
@@ -311,11 +168,11 @@ export class Scene {
     return this.closedBorders;
   }
 
-  setClosedBorders(val) {
+  setClosedBorders(val: boolean) {
     this.closedBorders = val;
   }
 
-  setCamera(camera) {
+  setCamera(camera: Camera) {
     this.camera = camera;
   }
 
@@ -323,7 +180,7 @@ export class Scene {
     return this.camera;
   }
 
-  setWidth(width) {
+  setWidth(width: number) {
     this.html.style.width = `${width}px`;
   }
 
@@ -335,15 +192,22 @@ export class Scene {
     return this.html.getBoundingClientRect().height;
   }
 
-  setHeight(height) {
+  setHeight(height: number) {
     this.html.style.height = `${height}px`;
   }
 
-  setBackgroundImage(url, options) {
+  setBackgroundImage(url: string, options) {
     this.setBackground(`url("${url}")`, options);
   }
 
-  setBackground(background, options = {}) {
+  setBackground(
+    background: string,
+    options = {
+      repeat: "repeat",
+      size: "contain",
+      attachment: "fixed",
+    }
+  ) {
     options = {
       ...{
         repeat: "repeat",
@@ -358,11 +222,11 @@ export class Scene {
     this.html.style.backgroundAttachment = options.attachment;
   }
 
-  getBackground(background) {
+  getBackground(background: string) {
     return this.html.style.background;
   }
 
-  setBackgroundColor(color) {
+  setBackgroundColor(color: string) {
     this.html.style.backgroundColor = color;
   }
 
@@ -370,7 +234,7 @@ export class Scene {
     return this.html.style.backgroundColor;
   }
 
-  addObject(gameObject) {
+  addObject(gameObject: GameObject) {
     this.objects.push(gameObject);
     this.html.appendChild(gameObject.getContainerHtml());
   }
@@ -383,7 +247,7 @@ export class Scene {
     return this.objects;
   }
 
-  checkIfThereIsYAxisOverlap(objectA, objectB) {
+  checkIfThereIsYAxisOverlap(objectA: GameObject, objectB: GameObject) {
     const boundariesA = objectA.getBoundaries();
     const boundariesB = objectB.getBoundaries();
 
@@ -400,7 +264,7 @@ export class Scene {
     return hasYUpperOverlap || hasYLowerOverlap;
   }
 
-  checkIfThereIsXAxisOverlap(objectA, objectB) {
+  checkIfThereIsXAxisOverlap(objectA: GameObject, objectB: GameObject) {
     const boundariesA = objectA.getBoundaries();
     const boundariesB = objectB.getBoundaries();
 
@@ -426,10 +290,10 @@ export class Scene {
     return hasXInnerOverlap;
   }
 
-  requestXUpdate(actor, isPositive) {
+  requestXUpdate(actor: GameObject, isPositive: boolean) {
     return this.requestCoordinateUpdate(actor, isPositive, "X");
   }
-  requestYUpdate(actor, isPositive) {
+  requestYUpdate(actor: GameObject, isPositive: boolean) {
     return this.requestCoordinateUpdate(actor, isPositive, "Y");
   }
 
@@ -442,7 +306,11 @@ export class Scene {
     };
   }
 
-  requestCoordinateUpdate(actor, isPositive, type) {
+  requestCoordinateUpdate(
+    actor: GameObject,
+    isPositive: boolean,
+    type: "X" | "Y"
+  ) {
     if (this.closedBorders) {
       const sceneBoundaries = this.getBoundaries();
 
