@@ -32,7 +32,7 @@ class GrassChunk extends PlatformChunk {
     const html = document.createElement("div");
 
     const surface = document.createElement("div");
-    surface.style.background = "limegreen";
+    surface.style.background = "linear-gradient(to right, lime, darkgreen)";
     surface.style.height = `${surfaceHeight}px`;
 
     html.appendChild(surface);
@@ -60,6 +60,9 @@ class GrassChunk extends PlatformChunk {
   screen.setActiveScene(scene);
 
   const platform = new Platform(scene);
+  platform.renderNextChunk(new GrassChunk());
+  platform.renderNextChunk(new GrassChunk(32));
+  platform.renderNextChunk(new GrassChunk());
   platform.renderNextChunk(new GrassChunk());
   platform.displayOnScene(0, window.innerHeight, 0);
   platform.setCollision(true);
@@ -93,6 +96,4 @@ class GrassChunk extends PlatformChunk {
   sphere2.setGravity(true);
 
   scene.getCamera().setAttachedObject(sphere);
-
-  platform.renderNextChunk(new GrassChunk());
 })();
