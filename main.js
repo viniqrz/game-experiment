@@ -918,7 +918,6 @@ class Control {
 
   notify(event) {
     this.controlListeners.forEach((listener) => {
-      console.log(listener.event.name, event.name);
       if (event.name === listener.event.name) listener.callback();
     });
   }
