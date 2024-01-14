@@ -1,4 +1,4 @@
-import { GameEvent, GameEventListener, GameListenersList } from ".";
+import { GameEvent, GameMouseEventListener, GameListenersList } from ".";
 
 export type MouseEventHtmlName =
   | "mousedown"
@@ -51,7 +51,7 @@ export class MouseClickEvent extends GameMouseEvent {
 }
 
 export class MouseEventsList implements GameListenersList<GameMouseEvent> {
-  private listeners: GameEventListener<GameMouseEvent>[] = [];
+  private listeners: GameMouseEventListener[] = [];
   private callbacks: Map<MouseEventHtmlName, Function[]>;
 
   static MouseEventHtmlNames: MouseEventHtmlName[] = [
@@ -88,7 +88,7 @@ export class MouseEventsList implements GameListenersList<GameMouseEvent> {
     return this.listeners;
   }
 
-  addListener(listener: GameEventListener<GameMouseEvent>) {
+  addListener(listener: GameMouseEventListener) {
     this.listeners.push(listener);
     this.callbacks.get(listener.event.htmlName)!.push((e: MouseEvent) => {
       if (listener.active) listener.callback(e);

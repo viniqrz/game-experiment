@@ -1,4 +1,4 @@
-import { GameEvent, GameEventListener, GameListenersList } from ".";
+import { GameEvent, GameKeyboardEventListener, GameListenersList } from ".";
 
 export type KeyboardKey = "w" | "s" | "a" | "d" | " ";
 export type KeyboardEventHtmlName = "keydown" | "keyup";
@@ -24,10 +24,10 @@ export class KeyUpEvent extends GameKeyboardEvent {
 export class KeyboardEventsList
   implements GameListenersList<GameKeyboardEvent>
 {
-  private listeners: GameEventListener<GameKeyboardEvent>[] = [];
+  private listeners: GameKeyboardEventListener[] = [];
   private callbacks: Map<
     KeyboardEventHtmlName,
-    Map<KeyboardKey, GameEventListener<GameKeyboardEvent>[]>
+    Map<KeyboardKey, GameKeyboardEventListener[]>
   >;
 
   static KeyboardEventHtmlNames: KeyboardEventHtmlName[] = ["keydown", "keyup"];
@@ -42,11 +42,11 @@ export class KeyboardEventsList
     for (const [type, keysMap] of this.callbacks) {
       this.parentNode.addEventListener(type, (e) => {
         console.log(e.key);
-        for (const [key, events] of keysMap) {
+        for (const [key, listeners] of keysMap) {
           if (key === e.key) {
-            for (const event of events) {
-              if (event.active) {
-                event.callback(e);
+            for (const listener of listeners) {
+              if (listener.active) {
+                listener.callback(e);
               }
             }
           }
@@ -73,7 +73,7 @@ export class KeyboardEventsList
     return this.listeners;
   }
 
-  addListener(listener: GameEventListener<GameKeyboardEvent>) {
+  addListener(listener: GameKeyboardEventListener) {
     this.listeners.push(listener);
     this.callbacks
       .get(listener.event.htmlName)!

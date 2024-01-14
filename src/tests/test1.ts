@@ -1,4 +1,10 @@
-import { GameObject, GameScreen, MouseDownEvent, Scene } from "../api";
+import {
+  GameObject,
+  GameScreen,
+  MouseDownEvent,
+  GameMouseEventListener,
+  Scene,
+} from "../api";
 
 class Character extends GameObject {
   constructor(scene, name, age, items) {
@@ -76,21 +82,26 @@ export function init() {
   char3.setCollision(true);
 
   scene.objects.forEach((char) => {
-    const clickToGetHello = new MouseDownEvent(() => {
-      char.setGravity(true);
-      char.getAdControl().setActive(!char.getAdControl().getActive());
-      // char.getWsadControl().setActive(!char.getWsadControl().getActive());
-      char.getJumpYControl().setActive(!char.getJumpYControl().getActive());
-      // char
-      //   .getFollowCursorOnMoveControl()
-      //   .setActive(!char.getFollowCursorOnMoveControl().getActive());
+    const clickToGetHello = new GameMouseEventListener(
+      new MouseDownEvent(),
+      () => {
+        char.setGravity(true);
+        char.getAdControl().setActive(!char.getAdControl().getActive());
+        // char.getWsadControl().setActive(!char.getWsadControl().getActive());
+        char.getJumpYControl().setActive(!char.getJumpYControl().getActive());
+        // char
+        //   .getFollowCursorOnMoveControl()
+        //   .setActive(!char.getFollowCursorOnMoveControl().getActive());
 
-      if (char.getAdControl().getActive()) {
-        // char.toBlue();
-      } else {
-        char.toRed();
+        if (char.getAdControl().getActive()) {
+          // char.toBlue();
+        } else {
+          if (char instanceof Character) {
+            char.toRed();
+          }
+        }
       }
-    });
-    char.mouse.addEvent(clickToGetHello);
+    );
+    char.mouse.addListener(clickToGetHello);
   });
 }

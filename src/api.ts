@@ -1,6 +1,38 @@
 import { KeyboardEventsList } from "./events/keyboard";
 import { MouseEventsList } from "./events/mouse";
 
+import {
+  GameKeyboardEvent,
+  KeyboardEventHtmlName,
+  KeyboardKey,
+} from "./events/keyboard";
+
+import {
+  GameMouseEvent,
+  MouseEventHtmlName,
+  MouseDownEvent,
+} from "./events/mouse";
+
+import {
+  GameEvent,
+  GameKeyboardEventListener,
+  GameMouseEventListener,
+  GameListenersList,
+} from "./events/index";
+
+import {
+  WSADControl,
+  ADControl,
+  JumpYControl,
+  FollowCursorOnMoveControl,
+  FollowCursorOnClickControl,
+  DragAndDropControl,
+  ControlEventListener,
+  ControlEvent,
+  StatusActiveControlEvent,
+  StatusInactiveControlEvent,
+} from "./controls";
+
 const main = document.getElementById("main");
 
 export class GameScreen {
@@ -470,6 +502,9 @@ export class Scene {
 }
 
 export class GameObject {
+  scene: Scene;
+  mouse: MouseEventsList;
+
   static GAME_OBJECT_CLASS_NAME = "game-object-container";
 
   constructor(scene: Scene, textureHtml: HTMLElement) {
@@ -707,6 +742,52 @@ export class GameObject {
   }
 }
 
+export class Spam {
+  constructor(callback, delay) {
+    this.callback = callback;
+    this.delay = delay;
+    this.id = null;
+    this.isRunning = false;
+    this.lastStopAfter = null;
+  }
+
+  async start(stopAfter = null) {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    this.id = setInterval(this.callback, this.delay);
+    this.lastStopAfter = stopAfter;
+
+    if (stopAfter) {
+      setTimeout(() => {
+        this.stop();
+      }, stopAfter);
+
+      await this.sleep(stopAfter);
+    }
+  }
+
+  sleep(time) {
+    return new Promise((resolve) => setTimeout(() => resolve(), time));
+  }
+
+  updateDelay(delay) {
+    this.delay = delay;
+    if (this.isRunning) {
+      this.stop();
+      this.start();
+    }
+  }
+
+  getIsRunning() {
+    return this.isRunning;
+  }
+
+  stop() {
+    this.isRunning = false;
+    clearInterval(this.id);
+  }
+}
+
 export class PlatformChunk {
   constructor(html, height) {
     this.html = html;
@@ -761,545 +842,35 @@ export class Platform extends GameObject {
   }
 }
 
-export class ControlEvent {}
-export class StatusActiveControlEvent extends ControlEvent {}
-export class StatusInactiveControlEvent extends ControlEvent {}
-
-export class ControlEventListener {
-  constructor(event, callback) {
-    this.event = event;
-    this.callback = callback;
-  }
-}
-
-export class Control {
-  constructor(object, active = false) {
-    this.active = active;
-    this.object = object;
-    this.events = [];
-    this.controlListeners = [];
-  }
-
-  addControlEventListener(callback) {
-    this.controlListeners.push(callback);
-  }
-
-  notify(event) {
-    this.controlListeners.forEach((listener) => {
-      if (event.name === listener.event.name) listener.callback();
-    });
-  }
-
-  getActive() {
-    return this.active;
-  }
-
-  setActive(active) {
-    this.active = active;
-
-    if (active) {
-      this.events.forEach((event) => {
-        event.active = true;
-      });
-    } else {
-      this.events.forEach((event) => {
-        event.active = false;
-      });
-    }
-  }
-
-  /**
-   * @param {GameEvent} event
-   * @returns {void}
-   * @memberof Control
-   * @description Append event to the object's SCENE and to the control
-   */
-  appendEventToScene(event) {
-    this.events.push(event);
-    event.setActive(this.active);
-
-    if (event instanceof KeyboardEvent) {
-      this.object.scene.keyboard.addEvent(event);
-    }
-
-    if (event instanceof MouseEvent) {
-      this.object.scene.mouse.addEvent(event);
-    }
-  }
-
-  /**
-   * @param {GameEvent} event
-   * @returns {void}
-   * @memberof Control
-   * @description Append event to the object and to the control
-   */
-  appendEventToObject(event) {
-    this.events.push(event);
-    event.setActive(this.active);
-
-    if (event instanceof KeyboardEvent) {
-      this.object.keyboard.addEvent(event);
-    }
-
-    if (event instanceof MouseEvent) {
-      this.object.mouse.addEvent(event);
-    }
-  }
-
-  appendInitialEvents(events) {
-    events.forEach((event) => this.appendEvent(event));
-  }
-}
-
-export class DragAndDropControl extends Control {
-  constructor(object, active = false) {
-    super(object, active);
-
-    this.mouseDown = false;
-    this.mouseX = 0;
-    this.mouseY = 0;
-
-    this.init();
-  }
-
-  init() {
-    const mouseMoveEvent = new MouseMoveEvent((e) => {
-      this.mouseX = e.clientX;
-      this.mouseY = e.clientY;
-
-      if (!this.mouseDown) return;
-
-      requestAnimationFrame(() => {
-        const objectBoundaries = this.object.getBoundaries();
-
-        const width = objectBoundaries.right - objectBoundaries.left;
-        const height = objectBoundaries.bottom - objectBoundaries.top;
-
-        this.object.setXY(this.mouseX - width / 2, this.mouseY - height / 2);
-      });
-    });
-
-    const mouseDownEvent = new MouseDownEvent((e) => {
-      this.mouseDown = true;
-      document.body.style.cursor = "grabbing";
-    });
-
-    const mouseUpEvent = new MouseUpEvent((e) => {
-      this.mouseDown = false;
-      document.body.style.cursor = "default";
-    });
-
-    const mouseEnterEvent = new MouseEnterEvent((e) => {
-      if (this.mouseDown) return;
-      document.body.style.cursor = "grab";
-    });
-
-    const mouseLeaveEvent = new MouseLeaveEvent((e) => {
-      if (this.mouseDown) return;
-      document.body.style.cursor = "default";
-    });
-
-    this.appendEventToObject(mouseEnterEvent);
-    this.appendEventToObject(mouseLeaveEvent);
-    this.appendEventToObject(mouseDownEvent);
-
-    this.appendEventToScene(mouseUpEvent);
-    this.appendEventToScene(mouseMoveEvent);
-  }
-}
-
-export class AbstractFollowCursorControl extends Control {
-  static INITIAL_RADIUS_THRESHOLD = 2;
-
-  constructor(object, active = false) {
-    super(object, active);
-
-    this.lastCursorX = 0;
-    this.lastCursorY = 0;
-    this.smoothness = 4;
-    this.radiusThreshold = AbstractFollowCursorControl.INITIAL_RADIUS_THRESHOLD;
-
-    this.rightSpam = new Spam(() => {
-      if (this.getCursorDistancesReferentToObject().right > 0) {
-        this.object.right();
-      } else {
-        this.rightSpam.stop();
-      }
-    }, this.smoothness);
-    this.leftSpam = new Spam(() => {
-      if (this.getCursorDistancesReferentToObject().left > 0) {
-        this.object.left();
-      } else {
-        this.leftSpam.stop();
-      }
-    }, this.smoothness);
-    this.upSpam = new Spam(() => {
-      if (this.getCursorDistancesReferentToObject().top > 0) {
-        this.object.up();
-      } else {
-        this.upSpam.stop();
-      }
-    }, this.smoothness);
-    this.downSpam = new Spam(() => {
-      if (this.getCursorDistancesReferentToObject().bottom > 0) {
-        this.object.down();
-      } else {
-        this.downSpam.stop();
-      }
-    }, this.smoothness);
-  }
-
-  // abstract
-  init() {}
-
-  setRadiusThreshold(radiusThreshold) {
-    this.radiusThreshold = radiusThreshold;
-  }
-
-  getRadiusThreshold() {
-    return this.radiusThreshold;
-  }
-
-  setSmoothness(smoothness) {
-    this.smoothness = smoothness;
-
-    this.upSpam.updateDelay(smoothness);
-    this.downSpam.updateDelay(smoothness);
-    this.leftSpam.updateDelay(smoothness);
-    this.rightSpam.updateDelay(smoothness);
-  }
-
-  getCursorDistancesReferentToObject() {
-    const objectPosition = this.object.getBoundaries();
-
-    const width = objectPosition.right - objectPosition.left;
-    const height = objectPosition.bottom - objectPosition.top;
-
-    const objectCenterX = objectPosition.left + width / 2;
-    const objectCenterY = objectPosition.top + height / 2;
-
-    const left = objectCenterX - this.lastCursorX;
-    const right = this.lastCursorX - objectCenterX;
-    const top = objectCenterY - this.lastCursorY;
-    const bottom = this.lastCursorY - objectCenterY;
-
-    return {
-      left,
-      right,
-      top,
-      bottom,
-    };
-  }
-
-  follow() {
-    const distances = this.getCursorDistancesReferentToObject();
-
-    if (distances.left > this.radiusThreshold) this.leftSpam.start();
-    if (distances.right > this.radiusThreshold) this.rightSpam.start();
-    if (distances.top > this.radiusThreshold) this.upSpam.start();
-    if (distances.bottom > this.radiusThreshold) this.downSpam.start();
-  }
-}
-
-export class FollowCursorOnClickControl extends AbstractFollowCursorControl {
-  constructor(object, active = false) {
-    super(object, active);
-
-    this.mouseDown = false;
-
-    this.init();
-  }
-
-  init() {
-    const mouseDownEvent = new MouseDownEvent((e) => {
-      this.mouseDown = !this.mouseDown;
-      document.body.style.cursor = "grabbing";
-    });
-
-    const mouseEnterEvent = new MouseEnterEvent((e) => {
-      if (this.mouseDown) return;
-      document.body.style.cursor = "grab";
-    });
-
-    const mouseLeaveEvent = new MouseLeaveEvent((e) => {
-      if (this.mouseDown) return;
-      document.body.style.cursor = "default";
-    });
-    const objectFollowCursor = new MouseMoveEvent((e) => {
-      this.lastCursorX = e.clientX;
-      this.lastCursorY = e.clientY;
-      if (this.mouseDown) this.follow();
-    });
-
-    this.appendEventToScene(objectFollowCursor);
-
-    this.appendEventToObject(mouseEnterEvent);
-    this.appendEventToObject(mouseLeaveEvent);
-    this.appendEventToObject(mouseDownEvent);
-  }
-}
-
-export class FollowCursorOnMoveControl extends AbstractFollowCursorControl {
-  constructor(object, active = false) {
-    super(object, active);
-
-    this.init();
-  }
-
-  init() {
-    const objectFollowCursor = new MouseMoveEvent((e) => {
-      this.lastCursorX = e.clientX;
-      this.lastCursorY = e.clientY;
-      this.follow();
-    });
-
-    this.appendEventToScene(objectFollowCursor);
-  }
-}
-
-export class JumpYControl extends Control {
-  static INITIAL_SPAM_DELAY = 3;
-  static INITIAL_DURATION = 500;
-  static INITIAL_MAX_JUMPS = 1;
-  static INITIAL_VERTICAL_STEP = 3;
-
-  constructor(object, active = false) {
-    super(object, active);
-
-    this.maxJumps = JumpYControl.INITIAL_MAX_JUMPS;
-    this.duration = JumpYControl.INITIAL_DURATION;
-    this.verticalStep = JumpYControl.INITIAL_VERTICAL_STEP;
-
-    this.spam1 = new Spam(() => {
-      this.jump(this.verticalStep);
-    }, JumpYControl.INITIAL_SPAM_DELAY);
-
-    this.spam2 = new Spam(() => {
-      this.jump(this.verticalStep / 2);
-    }, JumpYControl.INITIAL_SPAM_DELAY);
-
-    this.init();
-  }
-
-  init() {
-    const keydownEvent = new KeyDownEvent(" ", () => this.handleJump());
-    this.appendEventToScene(keydownEvent);
-  }
-
-  async handleJump() {
-    const allowed = this.object.requestJump(this.maxJumps);
-    if (!allowed) return;
-
-    await this.spam1.start(this.duration * (3 / 4));
-    await this.spam2.start(this.duration * (1 / 4));
-  }
-
-  jump(step) {
-    this.object.up(step);
-  }
-
-  setDuration(duration) {
-    this.duration = duration;
-  }
-
-  setSpamDelay(spamDelay) {
-    this.spam.updateDelay(spamDelay);
-  }
-}
-
-export class ADControl extends Control {
-  constructor(object, active = false) {
-    super(object, active);
-
-    const INITIAL_SPAM = 2;
-
-    this.spamDelay = INITIAL_SPAM;
-
-    this.isRunning = false;
-
-    this.isKeyDPressed = false;
-    this.isKeyAPressed = false;
-
-    this.goLeftSpam = new Spam(() => {
-      this.object.left();
-      this.setIsRunning(true);
-    }, this.spamDelay);
-    this.goRightSpam = new Spam(() => {
-      this.object.right();
-      this.setIsRunning(true);
-    }, this.spamDelay);
-
-    this.init();
-  }
-
-  init() {
-    const keyDownA = new KeyDownEvent("a", () => {
-      this.isKeyAPressed = true;
-      this.goLeftSpam.start();
-    });
-
-    const keyDownD = new KeyDownEvent("d", () => {
-      this.isKeyDPressed = true;
-      this.goRightSpam.start();
-    });
-
-    const keyUpA = new KeyUpEvent("a", () => {
-      this.goLeftSpam.stop();
-      this.isKeyAPressed = false;
-      if (!this.isKeyDPressed) this.setIsRunning(false);
-    });
-
-    const keyUpD = new KeyUpEvent("d", () => {
-      this.goRightSpam.stop();
-      this.isKeyDPressed = false;
-      if (!this.isKeyAPressed) this.setIsRunning(false);
-    });
-
-    this.appendEventToScene(keyDownA);
-    this.appendEventToScene(keyDownD);
-
-    this.appendEventToScene(keyUpA);
-    this.appendEventToScene(keyUpD);
-  }
-
-  setIsRunning(val) {
-    if (val === this.isRunning) return;
-    this.isRunning = val;
-    this.notify(val ? StatusActiveControlEvent : StatusInactiveControlEvent);
-  }
-
-  getIsRunning() {
-    return this.isRunning;
-  }
-
-  updateSpamDelay(spamDelay) {
-    this.spamDelay = spamDelay;
-
-    this.goLeftSpam.updateDelay(spamDelay);
-    this.goRightSpam.updateDelay(spamDelay);
-  }
-}
-
-export class WSADControl extends Control {
-  constructor(object, active = false) {
-    super(object, active);
-
-    const INITIAL_SPAM = 2;
-
-    this.spamDelay = INITIAL_SPAM;
-
-    this.goUpSpam = new Spam(() => {
-      this.object.up();
-    }, this.spamDelay);
-    this.goDownSpam = new Spam(() => {
-      this.object.down();
-    }, this.spamDelay);
-    this.goLeftSpam = new Spam(() => {
-      this.object.left();
-    }, this.spamDelay);
-    this.goRightSpam = new Spam(() => {
-      this.object.right();
-    }, this.spamDelay);
-
-    this.init();
-  }
-
-  init() {
-    const keyDownW = new KeyDownEvent("w", () => {
-      this.goUpSpam.start();
-    });
-
-    const keyDownS = new KeyDownEvent("s", () => {
-      this.goDownSpam.start();
-    });
-
-    const keyDownA = new KeyDownEvent("a", () => {
-      this.goLeftSpam.start();
-    });
-
-    const keyDownD = new KeyDownEvent("d", () => {
-      this.goRightSpam.start();
-    });
-
-    const keyUpW = new KeyUpEvent("w", () => {
-      this.goUpSpam.stop();
-    });
-
-    const keyUpS = new KeyUpEvent("s", () => {
-      this.goDownSpam.stop();
-    });
-
-    const keyUpA = new KeyUpEvent("a", () => {
-      this.goLeftSpam.stop();
-    });
-
-    const keyUpD = new KeyUpEvent("d", () => {
-      this.goRightSpam.stop();
-    });
-
-    this.appendEventToScene(keyDownW);
-    this.appendEventToScene(keyDownS);
-    this.appendEventToScene(keyDownA);
-    this.appendEventToScene(keyDownD);
-
-    this.appendEventToScene(keyUpW);
-    this.appendEventToScene(keyUpS);
-    this.appendEventToScene(keyUpA);
-    this.appendEventToScene(keyUpD);
-  }
-
-  updateSpeed(speed) {
-    this.spamDelay = speed;
-
-    this.goUpSpam.updateDelay(speed);
-    this.goDownSpam.updateDelay(speed);
-    this.goLeftSpam.updateDelay(speed);
-    this.goRightSpam.updateDelay(speed);
-  }
-}
-
-export class Spam {
-  constructor(callback, delay) {
-    this.callback = callback;
-    this.delay = delay;
-    this.id = null;
-    this.isRunning = false;
-    this.lastStopAfter = null;
-  }
-
-  async start(stopAfter = null) {
-    if (this.isRunning) return;
-    this.isRunning = true;
-    this.id = setInterval(this.callback, this.delay);
-    this.lastStopAfter = stopAfter;
-
-    if (stopAfter) {
-      setTimeout(() => {
-        this.stop();
-      }, stopAfter);
-
-      await this.sleep(stopAfter);
-    }
-  }
-
-  sleep(time) {
-    return new Promise((resolve) => setTimeout(() => resolve(), time));
-  }
-
-  updateDelay(delay) {
-    this.delay = delay;
-    if (this.isRunning) {
-      this.stop();
-      this.start();
-    }
-  }
-
-  getIsRunning() {
-    return this.isRunning;
-  }
-
-  stop() {
-    this.isRunning = false;
-    clearInterval(this.id);
-  }
-}
+export {
+  GameKeyboardEvent,
+  KeyboardEventHtmlName,
+  KeyboardKey,
+  KeyDownEvent,
+} from "./events/keyboard";
+
+export {
+  GameMouseEvent,
+  MouseEventHtmlName,
+  MouseDownEvent,
+} from "./events/mouse";
+
+export {
+  GameEvent,
+  GameKeyboardEventListener,
+  GameMouseEventListener,
+  GameListenersList,
+} from "./events/index";
+
+export {
+  WSADControl,
+  ADControl,
+  JumpYControl,
+  FollowCursorOnMoveControl,
+  FollowCursorOnClickControl,
+  DragAndDropControl,
+  ControlEventListener,
+  ControlEvent,
+  StatusActiveControlEvent,
+  StatusInactiveControlEvent,
+} from "./controls";

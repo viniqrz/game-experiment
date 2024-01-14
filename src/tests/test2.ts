@@ -107,5 +107,5 @@ export function init() {
   sphere2.setCollision(true);
   sphere2.setGravity(true);
 
-  scene.getCamera().setAttachedObject(sphere);
+  scene.getCamera()?.setAttachedObject(sphere);
 }

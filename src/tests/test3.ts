@@ -1,4 +1,11 @@
-import { Camera, GameObject, GameScreen, KeyDownEvent, Scene } from "../api";
+import {
+  Camera,
+  GameKeyboardEventListener,
+  GameObject,
+  GameScreen,
+  KeyDownEvent,
+  Scene,
+} from "../api";
 
 class MainScene extends Scene {
   constructor() {
@@ -71,13 +78,16 @@ export function init() {
   sphere2.displayOnScene(500, 300, 0);
   sphere2.setCollision(true);
 
-  const pressWToScare = new KeyDownEvent("w", () => {
-    if (sphere.getY() > window.innerHeight * 2.5) {
-      scene.scare();
+  const pressWToScare = new GameKeyboardEventListener(
+    new KeyDownEvent("w"),
+    () => {
+      if (sphere.getY() > window.innerHeight * 2.5) {
+        scene.scare();
+      }
     }
-  });
+  );
 
-  scene.keyboard.addEvent(pressWToScare);
+  scene.keyboard.addListener(pressWToScare);
 
   camera.setAttachedObject(sphere);
 }
