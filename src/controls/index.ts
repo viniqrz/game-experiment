@@ -1,4 +1,3 @@
-import { GameObject, Spam } from "../api";
 import { GameKeyboardEventListener, GameMouseEventListener } from "../events";
 import { KeyDownEvent, KeyUpEvent } from "../events/keyboard";
 import {
@@ -8,6 +7,8 @@ import {
   MouseMoveEvent,
   MouseUpEvent,
 } from "../events/mouse";
+import { GameObject } from "../object";
+import { Spam } from "../spam";
 
 export class ControlEvent {
   constructor() {}
