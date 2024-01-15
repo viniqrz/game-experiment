@@ -34,7 +34,11 @@ export class GameKeyboardEventListener extends GameEventListener<GameKeyboardEve
 }
 
 export class GameMouseEventListener extends GameEventListener<GameMouseEvent> {
-  constructor(public event: GameMouseEvent, callback: Function, active = true) {
+  constructor(
+    public event: GameMouseEvent,
+    callback: (e: MouseEvent) => any,
+    active = true
+  ) {
     super(event, callback, active);
   }
 }

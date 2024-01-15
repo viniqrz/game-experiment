@@ -2,25 +2,6 @@ import { KeyboardEventsList } from "./events/keyboard";
 import { MouseEventsList } from "./events/mouse";
 
 import {
-  GameKeyboardEvent,
-  KeyboardEventHtmlName,
-  KeyboardKey,
-} from "./events/keyboard";
-
-import {
-  GameMouseEvent,
-  MouseEventHtmlName,
-  MouseDownEvent,
-} from "./events/mouse";
-
-import {
-  GameEvent,
-  GameKeyboardEventListener,
-  GameMouseEventListener,
-  GameListenersList,
-} from "./events/index";
-
-import {
   WSADControl,
   ADControl,
   JumpYControl,
@@ -169,6 +150,7 @@ export class Scene {
   keyboard: KeyboardEventsList;
   camera: Camera | null;
   closedBorders: boolean;
+  gravitySpam: Spam;
 
   constructor() {
     this.objects = [];
@@ -190,7 +172,11 @@ export class Scene {
     });
 
     this.setWidth(window.innerWidth);
-    this.initGravity();
+
+    this.gravitySpam = new Spam(() => {
+      this.ensureGravity();
+    }, 3);
+    this.gravitySpam.start();
 
     this.camera = null;
     this.closedBorders = true;
@@ -228,7 +214,14 @@ export class Scene {
     this.html.style.height = `${height}px`;
   }
 
-  setBackgroundImage(url: string, options) {
+  setBackgroundImage(
+    url: string,
+    options: {
+      repeat: string;
+      size: string;
+      attachment: string;
+    }
+  ) {
     this.setBackground(`url("${url}")`, options);
   }
 
@@ -421,14 +414,6 @@ export class Scene {
     return true;
   }
 
-  initGravity() {
-    this.gravitySpam = new Spam(() => {
-      this.ensureGravity();
-    }, 3);
-
-    this.gravitySpam.start();
-  }
-
   ensureGravity() {
     const objects = this.getObjects();
 
@@ -439,7 +424,7 @@ export class Scene {
     }
   }
 
-  findObjectBelowWithinRange(actor, range = 0) {
+  findObjectBelowWithinRange(actor: GameObject, range = 0) {
     const objects = this.getObjects();
 
     for (const object of objects) {
@@ -465,45 +450,60 @@ export class Scene {
     return null;
   }
 
-  requestJump(actor) {
+  requestJump(actor: GameObject) {
     const objectBelow = this.findObjectBelowWithinRange(actor);
     return Boolean(objectBelow);
   }
 
-  notifyXChange(actor, diff) {
+  notifyXChange(actor: GameObject, diff: number) {
     this.moveAttachedCameraX(actor, diff);
   }
 
-  moveAttachedCameraX(actor, diff) {
+  moveAttachedCameraX(actor: GameObject, diff: number) {
     if (!actor.checkIfHasCameraAttached()) return;
 
-    if (diff > 0 && this.getCamera().checkIfObjectIsBeforeXAxisCenter(actor))
+    if (diff > 0 && this.getCamera()!.checkIfObjectIsBeforeXAxisCenter(actor))
       return;
-    if (diff < 0 && this.getCamera().checkIfObjectIsAfterXAxisCenter(actor))
+    if (diff < 0 && this.getCamera()!.checkIfObjectIsAfterXAxisCenter(actor))
       return;
 
-    this.getCamera().moveX(diff);
+    this.getCamera()!.moveX(diff);
   }
 
-  notifyYChange(actor, diff) {
+  notifyYChange(actor: GameObject, diff: number) {
     this.moveAttachedCameraY(actor, diff);
   }
 
-  moveAttachedCameraY(actor, diff) {
+  moveAttachedCameraY(actor: GameObject, diff: number) {
     if (!actor.checkIfHasCameraAttached()) return;
 
-    if (diff > 0 && this.getCamera().checkIfObjectIsBeforeYAxisCenter(actor))
+    if (diff > 0 && this.getCamera()!.checkIfObjectIsBeforeYAxisCenter(actor))
       return;
-    if (diff < 0 && this.getCamera().checkIfObjectIsAfterYAxisCenter(actor))
+    if (diff < 0 && this.getCamera()!.checkIfObjectIsAfterYAxisCenter(actor))
       return;
 
-    this.getCamera().moveY(diff);
+    this.getCamera()!.moveY(diff);
   }
 }
 
 export class GameObject {
   scene: Scene;
   mouse: MouseEventsList;
+  containerHtml: HTMLElement;
+  textureHtml: HTMLElement;
+  ID: string;
+  x: number;
+  y: number;
+  z: number;
+  collision: boolean;
+  gravity: boolean;
+  gravityIntensity: number;
+  wsadControl: WSADControl;
+  adControl: ADControl;
+  jumpYControl: JumpYControl;
+  dragAndDropControl: DragAndDropControl;
+  followCursorOnMoveControl: FollowCursorOnMoveControl;
+  followCursorOnClickControl: FollowCursorOnClickControl;
 
   static GAME_OBJECT_CLASS_NAME = "game-object-container";
 
@@ -521,7 +521,7 @@ export class GameObject {
     this.containerHtml.id = this.ID;
     this.containerHtml.style.position = "absolute";
     this.containerHtml.style.overflow = "hidden";
-    this.containerHtml.draggable = "false";
+    this.containerHtml.draggable = false;
 
     this.x = 0;
     this.y = 0;
@@ -545,12 +545,12 @@ export class GameObject {
   checkIfHasCameraAttached() {
     return (
       this.scene.getCamera() &&
-      this.scene.getCamera().getAttachedObject() &&
-      this.scene.getCamera().getAttachedObject().ID === this.ID
+      this.scene.getCamera()!.getAttachedObject() &&
+      this.scene.getCamera()!.getAttachedObject()!.ID === this.ID
     );
   }
 
-  setContainerWidth(width) {
+  setContainerWidth(width: number) {
     this.containerHtml.style.width = `${width}px`;
   }
 
@@ -562,7 +562,7 @@ export class GameObject {
     return this.textureHtml.getBoundingClientRect().width;
   }
 
-  setWidth(width) {
+  setWidth(width: number) {
     this.textureHtml.style.width = `${width}px`;
   }
 
@@ -570,7 +570,7 @@ export class GameObject {
     return this.textureHtml.getBoundingClientRect().height;
   }
 
-  setHeight(height) {
+  setHeight(height: number) {
     this.textureHtml.style.height = `${height}px`;
   }
 
@@ -589,7 +589,7 @@ export class GameObject {
 
   notifyTextureChange() {}
 
-  updateTextureHtml(textureHtml) {
+  updateTextureHtml(textureHtml: HTMLElement) {
     this.containerHtml.innerHTML = textureHtml.outerHTML;
     this.textureHtml = textureHtml;
     this.notifyTextureChange();
@@ -606,7 +606,7 @@ export class GameObject {
     };
   }
 
-  setCollision(val) {
+  setCollision(val: boolean) {
     this.collision = val;
   }
 
@@ -614,7 +614,7 @@ export class GameObject {
     return this.collision;
   }
 
-  setGravity(val) {
+  setGravity(val: boolean) {
     this.gravity = val;
   }
 
@@ -622,7 +622,7 @@ export class GameObject {
     return this.gravity;
   }
 
-  setGravityIntensity(val) {
+  setGravityIntensity(val: number) {
     this.gravityIntensity = val;
   }
 
@@ -658,7 +658,7 @@ export class GameObject {
     return this.x;
   }
 
-  setX(x) {
+  setX(x: number) {
     const diff = x - this.x;
     const isPositive = diff > 0;
     const allowed = this.scene.requestXUpdate(this, isPositive);
@@ -671,7 +671,7 @@ export class GameObject {
     this.notifyXChange(diff);
   }
 
-  notifyXChange(diff) {
+  notifyXChange(diff: number) {
     this.scene.notifyXChange(this, diff);
   }
 
@@ -679,7 +679,7 @@ export class GameObject {
     return this.y;
   }
 
-  setY(y) {
+  setY(y: number) {
     const diff = y - this.y;
     const isPositive = diff > 0;
     const allowed = this.scene.requestYUpdate(this, isPositive);
@@ -692,22 +692,22 @@ export class GameObject {
     this.notifyYChange(diff);
   }
 
-  notifyYChange(diff) {
+  notifyYChange(diff: number) {
     this.scene.notifyYChange(this, diff);
   }
 
-  setZ(z) {
+  setZ(z: number) {
     this.z = z;
 
-    this.getContainerHtml().style.zIndex = z;
+    this.getContainerHtml().style.zIndex = z + "";
   }
 
-  setXY(x, y) {
+  setXY(x: number, y: number) {
     this.setX(x);
     this.setY(y);
   }
 
-  setXYZ(x, y, z) {
+  setXYZ(x: number, y: number, z: number) {
     this.setX(x);
     this.setY(y);
     this.setZ(z);
@@ -743,7 +743,13 @@ export class GameObject {
 }
 
 export class Spam {
-  constructor(callback, delay) {
+  callback: Function;
+  delay: number;
+  id: number | null;
+  isRunning: boolean;
+  lastStopAfter: number | null;
+
+  constructor(callback: Function, delay: number) {
     this.callback = callback;
     this.delay = delay;
     this.id = null;
@@ -751,7 +757,7 @@ export class Spam {
     this.lastStopAfter = null;
   }
 
-  async start(stopAfter = null) {
+  async start(stopAfter: number | null = null) {
     if (this.isRunning) return;
     this.isRunning = true;
     this.id = setInterval(this.callback, this.delay);
@@ -766,11 +772,11 @@ export class Spam {
     }
   }
 
-  sleep(time) {
-    return new Promise((resolve) => setTimeout(() => resolve(), time));
+  sleep(time: number) {
+    return new Promise((resolve) => setTimeout(() => resolve(true), time));
   }
 
-  updateDelay(delay) {
+  updateDelay(delay: number) {
     this.delay = delay;
     if (this.isRunning) {
       this.stop();
@@ -783,13 +789,18 @@ export class Spam {
   }
 
   stop() {
+    if (!this.id) return;
     this.isRunning = false;
     clearInterval(this.id);
   }
 }
 
 export class PlatformChunk {
-  constructor(html, height) {
+  html: HTMLElement;
+  width: number;
+  height: number;
+
+  constructor(html: HTMLElement, height: number) {
     this.html = html;
     this.width = html.getBoundingClientRect().width;
     this.height = height;
@@ -799,7 +810,7 @@ export class PlatformChunk {
     return this.height;
   }
 
-  setWidth(width) {
+  setWidth(width: number) {
     this.width = width;
     this.html.style.width = `${width}px`;
   }
@@ -809,7 +820,12 @@ export class Platform extends GameObject {
   static PLATFORM_CLASS_NAME = "platform";
   static PLATFORM_CHUNK_SIZE = window.innerWidth;
 
-  constructor(scene) {
+  width: number;
+  chunks: PlatformChunk[];
+  chunksContainer: HTMLElement;
+  chunkSize: number;
+
+  constructor(scene: Scene) {
     const container = document.createElement("div");
     container.className = Platform.PLATFORM_CLASS_NAME;
     container.style.overflow = "hidden";
@@ -823,7 +839,7 @@ export class Platform extends GameObject {
     this.width = 0;
   }
 
-  renderNextChunk(chunk) {
+  renderNextChunk(chunk: PlatformChunk) {
     chunk.setWidth(this.getChunkSize());
 
     this.width = this.width + this.getChunkSize();
@@ -837,7 +853,7 @@ export class Platform extends GameObject {
     return this.chunkSize;
   }
 
-  setChunkSize(chunkSize) {
+  setChunkSize(chunkSize: number) {
     this.chunkSize = chunkSize;
   }
 }
