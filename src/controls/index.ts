@@ -1,12 +1,7 @@
 import { GameObject, Spam } from "../api";
 import { GameKeyboardEventListener, GameMouseEventListener } from "../events";
+import { KeyDownEvent, KeyUpEvent } from "../events/keyboard";
 import {
-  GameKeyboardEvent,
-  KeyDownEvent,
-  KeyUpEvent,
-} from "../events/keyboard";
-import {
-  GameMouseEvent,
   MouseDownEvent,
   MouseEnterEvent,
   MouseLeaveEvent,
@@ -14,9 +9,19 @@ import {
   MouseUpEvent,
 } from "../events/mouse";
 
-export class ControlEvent {}
-export class StatusActiveControlEvent extends ControlEvent {}
-export class StatusInactiveControlEvent extends ControlEvent {}
+export class ControlEvent {
+  constructor() {}
+}
+export class StatusActiveControlEvent extends ControlEvent {
+  constructor() {
+    super();
+  }
+}
+export class StatusInactiveControlEvent extends ControlEvent {
+  constructor() {
+    super();
+  }
+}
 
 export class ControlEventListener {
   constructor(public event: ControlEvent, public callback: Function) {}
@@ -41,6 +46,7 @@ export class Control {
 
   notify(event: ControlEvent) {
     this.controlListeners.forEach((listener) => {
+      //@ts-ignore
       if (event.name === listener.event.name) listener.callback();
     });
   }
@@ -377,28 +383,39 @@ export class JumpYControl extends Control {
   }
 
   async handleJump() {
-    const allowed = this.object.requestJump(this.maxJumps);
+    const allowed = this.object.requestJump();
     if (!allowed) return;
 
     await this.spam1.start(this.duration * (3 / 4));
     await this.spam2.start(this.duration * (1 / 4));
   }
 
-  jump(step) {
+  jump(step: number) {
     this.object.up(step);
   }
 
-  setDuration(duration) {
+  setDuration(duration: number) {
     this.duration = duration;
   }
 
-  setSpamDelay(spamDelay) {
-    this.spam.updateDelay(spamDelay);
+  setSpam75Delay(spamDelay: number) {
+    this.spam1.updateDelay(spamDelay);
+  }
+
+  setSpam25Delay(spamDelay: number) {
+    this.spam2.updateDelay(spamDelay);
   }
 }
 
 export class ADControl extends Control {
-  constructor(object, active = false) {
+  spamDelay: number;
+  isRunning: boolean;
+  isKeyDPressed: boolean;
+  isKeyAPressed: boolean;
+  goLeftSpam: Spam;
+  goRightSpam: Spam;
+
+  constructor(object: GameObject, active = false) {
     super(object, active);
 
     const INITIAL_SPAM = 2;
@@ -458,7 +475,7 @@ export class ADControl extends Control {
     this.appendEventListenerToScene(keyUpD);
   }
 
-  setIsRunning(val) {
+  setIsRunning(val: boolean) {
     if (val === this.isRunning) return;
     this.isRunning = val;
     this.notify(val ? StatusActiveControlEvent : StatusInactiveControlEvent);
@@ -468,7 +485,7 @@ export class ADControl extends Control {
     return this.isRunning;
   }
 
-  updateSpamDelay(spamDelay) {
+  updateSpamDelay(spamDelay: number) {
     this.spamDelay = spamDelay;
 
     this.goLeftSpam.updateDelay(spamDelay);
@@ -477,7 +494,13 @@ export class ADControl extends Control {
 }
 
 export class WSADControl extends Control {
-  constructor(object, active = false) {
+  spamDelay: number;
+  goUpSpam: Spam;
+  goDownSpam: Spam;
+  goLeftSpam: Spam;
+  goRightSpam: Spam;
+
+  constructor(object: GameObject, active = false) {
     super(object, active);
 
     const INITIAL_SPAM = 2;
@@ -556,7 +579,7 @@ export class WSADControl extends Control {
     this.appendEventListenerToScene(keyUpD);
   }
 
-  updateSpeed(speed) {
+  updateSpeed(speed: number) {
     this.spamDelay = speed;
 
     this.goUpSpam.updateDelay(speed);

@@ -216,18 +216,22 @@ export class Scene {
 
   setBackgroundImage(
     url: string,
-    options: {
+    options: Partial<{
       repeat: string;
       size: string;
       attachment: string;
-    }
+    }>
   ) {
     this.setBackground(`url("${url}")`, options);
   }
 
   setBackground(
     background: string,
-    options = {
+    options: Partial<{
+      repeat: string;
+      size: string;
+      attachment: string;
+    }> = {
       repeat: "repeat",
       size: "contain",
       attachment: "fixed",
@@ -242,12 +246,12 @@ export class Scene {
       ...options,
     };
     this.html.style.background = background;
-    this.html.style.backgroundRepeat = options.repeat;
-    this.html.style.backgroundSize = options.size;
-    this.html.style.backgroundAttachment = options.attachment;
+    this.html.style.backgroundRepeat = options.repeat || "repeat";
+    this.html.style.backgroundSize = options.size || "contain";
+    this.html.style.backgroundAttachment = options.attachment || "fixed";
   }
 
-  getBackground(background: string) {
+  getBackground() {
     return this.html.style.background;
   }
 

@@ -8,6 +8,8 @@ import {
 } from "../api";
 
 class MainScene extends Scene {
+  scaring = false;
+
   constructor() {
     super();
 
@@ -17,7 +19,6 @@ class MainScene extends Scene {
       size: "cover",
       attachment: "scroll",
     });
-    this.scaring = false;
   }
 
   scare() {
@@ -44,7 +45,7 @@ class MainScene extends Scene {
 }
 
 class Sphere extends GameObject {
-  constructor(scene) {
+  constructor(scene: Scene) {
     const html = Sphere.generateHtml();
 
     super(scene, html);

@@ -7,21 +7,16 @@ import {
 } from "../api";
 
 class Character extends GameObject {
-  constructor(scene, name, age, items) {
+  constructor(scene: Scene, public name: string) {
     const html = Character.generateHtml("red");
-
     super(scene, html);
-
-    this.name = name;
-    this.age = age;
-    this.items = items;
   }
 
   sayHello() {
     alert(`Hello, my name is ${this.name}`);
   }
 
-  static generateHtml(color) {
+  static generateHtml(color: string) {
     const html = document.createElement("div");
     html.classList.add("character");
     html.classList.add(`char-${color}`);
@@ -38,7 +33,7 @@ class Character extends GameObject {
 }
 
 class Bar extends GameObject {
-  constructor(scene, color) {
+  constructor(scene: Scene, color: string) {
     const html = document.createElement("div");
     html.classList.add("bar");
     html.classList.add(color);
