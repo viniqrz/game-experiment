@@ -3,8 +3,6 @@ export { Scene } from "./scene";
 export { Camera } from "./camera";
 export { GameScreen } from "./screen";
 
-export { Platform, PlatformChunk } from "./object/platform";
-
 export {
   GameKeyboardEvent,
   KeyboardEventHtmlName,

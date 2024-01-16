@@ -42,9 +42,15 @@ class Bar extends GameObject {
   }
 }
 
+class MainScene extends Scene {
+  constructor() {
+    super();
+  }
+}
+
 export function init() {
   const screen = new GameScreen();
-  const scene = new Scene();
+  const scene = new MainScene();
   const char1 = new Character(scene, "Robert");
   const char2 = new Character(scene, "Jon");
   const char3 = new Character(scene, "Brandon");

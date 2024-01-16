@@ -9,7 +9,7 @@ import {
 import { MouseEventsList } from "../events/mouse";
 import { Scene } from "../scene";
 
-export class GameObject {
+export abstract class GameObject {
   scene: Scene;
   mouse: MouseEventsList;
   containerHtml: HTMLElement;
@@ -81,8 +81,15 @@ export class GameObject {
     return this.containerHtml.getBoundingClientRect().width;
   }
 
+  getDisplayWidth() {
+    return this.containerHtml.getBoundingClientRect().width;
+  }
+
   getWidth() {
-    return this.textureHtml.getBoundingClientRect().width;
+    return (
+      this.textureHtml.getBoundingClientRect().width ||
+      Number(this.textureHtml.style.width.split("px")[0])
+    );
   }
 
   setWidth(width: number) {
@@ -90,7 +97,10 @@ export class GameObject {
   }
 
   getHeight() {
-    return this.textureHtml.getBoundingClientRect().height;
+    return (
+      this.textureHtml.getBoundingClientRect().height ||
+      Number(this.textureHtml.style.height.split("px")[0])
+    );
   }
 
   setHeight(height: number) {

@@ -416,6 +416,9 @@ export class ADControl extends Control {
   goLeftSpam: Spam;
   goRightSpam: Spam;
 
+  onPressA?: Function;
+  onPressD?: Function;
+
   constructor(object: GameObject, active = false) {
     super(object, active);
 
@@ -440,12 +443,21 @@ export class ADControl extends Control {
     this.init();
   }
 
+  setOnPressA(callback: Function) {
+    this.onPressA = callback;
+  }
+
+  setOnPressD(callback: Function) {
+    this.onPressD = callback;
+  }
+
   init() {
     const keyDownA = new GameKeyboardEventListener(
       new KeyDownEvent("a"),
       () => {
         this.isKeyAPressed = true;
         this.goLeftSpam.start();
+        if (this.onPressA) this.onPressA();
       }
     );
 
@@ -454,6 +466,7 @@ export class ADControl extends Control {
       () => {
         this.isKeyDPressed = true;
         this.goRightSpam.start();
+        if (this.onPressD) this.onPressD();
       }
     );
 

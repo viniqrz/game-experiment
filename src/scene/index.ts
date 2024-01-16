@@ -4,7 +4,7 @@ import { MouseEventsList } from "../events/mouse";
 import { GameObject } from "../object";
 import { Spam } from "../spam";
 
-export class Scene {
+export abstract class Scene {
   objects: GameObject[];
   html: HTMLElement;
   mouse: MouseEventsList;
@@ -12,8 +12,10 @@ export class Scene {
   camera: Camera | null;
   closedBorders: boolean;
   gravitySpam: Spam;
+  ID: string;
 
   constructor() {
+    this.ID = Math.random().toString().slice(2);
     this.objects = [];
 
     this.html = document.createElement("div");
@@ -64,11 +66,17 @@ export class Scene {
   }
 
   getWidth() {
-    return this.html.getBoundingClientRect().width;
+    return (
+      this.html.getBoundingClientRect().width ||
+      Number(this.html.style.width.split("px")[0])
+    );
   }
 
   getHeight() {
-    return this.html.getBoundingClientRect().height;
+    return (
+      this.html.getBoundingClientRect().height ||
+      Number(this.html.style.height.split("px")[0])
+    );
   }
 
   setHeight(height: number) {
@@ -141,48 +149,53 @@ export class Scene {
     const boundariesA = objectA.getBoundaries();
     const boundariesB = objectB.getBoundaries();
 
-    const hasYUpperOverlap =
-      (boundariesA.top < boundariesB.bottom &&
-        boundariesA.bottom > boundariesB.bottom) ||
-      boundariesA.top === boundariesB.top;
+    // case 1 upper
+    const upper =
+      boundariesA.top < boundariesB.top && boundariesA.bottom > boundariesB.top;
 
-    const hasYLowerOverlap =
-      (boundariesA.bottom > boundariesB.top &&
-        boundariesA.top < boundariesB.top) ||
-      boundariesA.bottom === boundariesB.bottom;
+    // case 2 middle
 
-    return hasYUpperOverlap || hasYLowerOverlap;
+    const middle =
+      boundariesA.top >= boundariesB.top &&
+      boundariesA.bottom <= boundariesB.bottom;
+
+    // case 3 lower
+
+    const lower =
+      boundariesA.bottom > boundariesB.bottom &&
+      boundariesA.top < boundariesB.bottom;
+
+    return upper || middle || lower;
   }
 
   checkIfThereIsXAxisOverlap(objectA: GameObject, objectB: GameObject) {
     const boundariesA = objectA.getBoundaries();
     const boundariesB = objectB.getBoundaries();
 
-    const hasXLeftOverlap =
-      (boundariesA.left < boundariesB.right &&
-        boundariesA.right > boundariesB.right) ||
-      boundariesA.left === boundariesB.left;
+    // case 1 left
+    const left =
+      boundariesA.left < boundariesB.left &&
+      boundariesA.right > boundariesB.left;
 
-    if (hasXLeftOverlap) return true;
+    // case 2 middle
 
-    const hasXRightOverlap =
-      (boundariesA.right > boundariesB.left &&
-        boundariesA.left < boundariesB.left) ||
-      boundariesA.right === boundariesB.right;
+    const middle =
+      boundariesA.left >= boundariesB.left &&
+      boundariesA.right <= boundariesB.right;
 
-    if (hasXRightOverlap) return true;
+    // case 3 right
 
-    const hasXInnerOverlap =
-      boundariesA.left < boundariesB.right &&
-      boundariesA.right < boundariesB.right &&
-      boundariesA.right >= boundariesB.left;
+    const right =
+      boundariesA.right > boundariesB.right &&
+      boundariesA.left < boundariesB.right;
 
-    return hasXInnerOverlap;
+    return left || middle || right;
   }
 
   requestXUpdate(actor: GameObject, isPositive: boolean) {
     return this.requestCoordinateUpdate(actor, isPositive, "X");
   }
+
   requestYUpdate(actor: GameObject, isPositive: boolean) {
     return this.requestCoordinateUpdate(actor, isPositive, "Y");
   }
