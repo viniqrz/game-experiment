@@ -28,6 +28,9 @@ export abstract class GameObject {
   followCursorOnMoveControl: FollowCursorOnMoveControl;
   followCursorOnClickControl: FollowCursorOnClickControl;
 
+  onXChange?: (diff: number) => void;
+  onYChange?: (diff: number) => void;
+
   static GAME_OBJECT_CLASS_NAME = "game-object-container";
 
   constructor(scene: Scene, textureHtml: HTMLElement) {
@@ -187,6 +190,14 @@ export abstract class GameObject {
     return this.dragAndDropControl;
   }
 
+  setOnXChange(callback: (diff: number) => void) {
+    this.onXChange = callback;
+  }
+
+  setOnYChange(callback: (diff: number) => void) {
+    this.onYChange = callback;
+  }
+
   getX() {
     return this.x;
   }
@@ -202,6 +213,8 @@ export abstract class GameObject {
     this.getContainerHtml().style.left = `${x}px`;
 
     this.notifyXChange(diff);
+
+    if (this.onXChange) this.onXChange(diff);
   }
 
   notifyXChange(diff: number) {
@@ -223,6 +236,8 @@ export abstract class GameObject {
     this.getContainerHtml().style.top = `${y}px`;
 
     this.notifyYChange(diff);
+
+    if (this.onXChange) this.onXChange(diff);
   }
 
   notifyYChange(diff: number) {

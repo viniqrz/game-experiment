@@ -1,4 +1,11 @@
-import { Camera, GameObject, GameScreen, Scene } from "../api";
+import {
+  Camera,
+  GameKeyboardEventListener,
+  GameObject,
+  GameScreen,
+  KeyDownEvent,
+  Scene,
+} from "../api";
 
 class MainScene extends Scene {
   constructor() {
@@ -117,6 +124,13 @@ export class Character extends GameObject {
   }
 }
 
+export class SecondScene extends Scene {
+  constructor() {
+    super();
+    this.setBackgroundColor("red");
+  }
+}
+
 export function init() {
   const screen = new GameScreen();
   const scene = new MainScene();
@@ -128,17 +142,15 @@ export function init() {
   scene.setClosedBorders(true);
   scene.setBackgroundColor("skyblue");
 
-  const sphere = new Sphere(scene);
-  sphere.displayOnScene(0, 0, 0);
-  sphere.setGravity(true);
-  sphere.setCollision(true);
+  // const sphere = new Sphere(scene);
+  // sphere.displayOnScene(0, 0, 0);
+  // sphere.setGravity(true);
+  // sphere.setCollision(true);
 
-  scene.getCamera()?.setAttachedObject(sphere);
-
-  const sphere2 = new Sphere(scene);
-  sphere2.displayOnScene(500, 300, 0);
-  sphere2.setCollision(true);
-  sphere2.setGravity(true);
+  // const sphere2 = new Sphere(scene);
+  // sphere2.displayOnScene(500, 300, 0);
+  // sphere2.setCollision(true);
+  // sphere2.setGravity(true);
 
   const mario = new Character(scene);
   mario.getJumpYControl().setActive(true);
@@ -146,6 +158,8 @@ export function init() {
   mario.displayOnScene(100, 100, 0);
   mario.setCollision(true);
   mario.setGravity(true);
+
+  scene.getCamera()?.setAttachedObject(mario);
 
   (() => {
     const platform = new Platform(scene);
@@ -156,4 +170,13 @@ export function init() {
       platform.addChunk(grass);
     }
   })();
+
+  mario.onXChange = (diff) => {
+    if (diff > 0) {
+      const GAP = 10;
+      if (mario.getX() >= scene.getWidth() - mario.getWidth() - GAP) {
+        screen.setActiveScene(new SecondScene());
+      }
+    }
+  };
 }
