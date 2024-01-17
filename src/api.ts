@@ -1,20 +1,11 @@
-export { GameObject } from "./object";
+export { GameObject, ControllableGameObject } from "./object";
 export { Scene } from "./scene";
 export { Camera } from "./camera";
 export { GameScreen } from "./screen";
 
-export {
-  GameKeyboardEvent,
-  KeyboardEventHtmlName,
-  KeyboardKey,
-  KeyDownEvent,
-} from "./events/keyboard";
+export { GameKeyboardEvent, KeyboardKey } from "./events/keyboard";
 
-export {
-  GameMouseEvent,
-  MouseEventHtmlName,
-  MouseDownEvent,
-} from "./events/mouse";
+export { GameMouseEvent, MouseEventHtmlName } from "./events/mouse";
 
 export {
   GameEvent,

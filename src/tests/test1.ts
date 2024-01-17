@@ -1,12 +1,13 @@
 import {
   GameObject,
   GameScreen,
-  MouseDownEvent,
   GameMouseEventListener,
   Scene,
+  GameMouseEvent,
 } from "../api";
+import { ControllableGameObject } from "../object";
 
-class Character extends GameObject {
+class Character extends ControllableGameObject {
   constructor(scene: Scene, public name: string) {
     const html = Character.generateHtml("red");
     super(scene, html);
@@ -84,18 +85,16 @@ export function init() {
 
   scene.objects.forEach((char) => {
     const clickToGetHello = new GameMouseEventListener(
-      new MouseDownEvent(),
+      GameMouseEvent.DOWN,
       () => {
+        if (!(char instanceof Character)) return;
+
         char.setGravity(true);
         char.getAdControl().setActive(!char.getAdControl().getActive());
-        // char.getWsadControl().setActive(!char.getWsadControl().getActive());
         char.getJumpYControl().setActive(!char.getJumpYControl().getActive());
-        // char
-        //   .getFollowCursorOnMoveControl()
-        //   .setActive(!char.getFollowCursorOnMoveControl().getActive());
 
         if (char.getAdControl().getActive()) {
-          // char.toBlue();
+          char.toBlue();
         } else {
           if (char instanceof Character) {
             char.toRed();

@@ -1,11 +1,5 @@
-import {
-  Camera,
-  GameKeyboardEventListener,
-  GameObject,
-  GameScreen,
-  KeyDownEvent,
-  Scene,
-} from "../api";
+import { Camera, GameObject, GameScreen, Scene } from "../api";
+import { ControllableGameObject } from "../object";
 
 class MainScene extends Scene {
   constructor() {
@@ -100,7 +94,7 @@ class Platform {
   }
 }
 
-export class Character extends GameObject {
+export class Character extends ControllableGameObject {
   constructor(scene: Scene) {
     const html = Character.generateHtml();
     super(scene, html);

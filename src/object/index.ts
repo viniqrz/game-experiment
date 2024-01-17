@@ -21,12 +21,6 @@ export abstract class GameObject {
   collision: boolean;
   gravity: boolean;
   gravityIntensity: number;
-  wsadControl: WSADControl;
-  adControl: ADControl;
-  jumpYControl: JumpYControl;
-  dragAndDropControl: DragAndDropControl;
-  followCursorOnMoveControl: FollowCursorOnMoveControl;
-  followCursorOnClickControl: FollowCursorOnClickControl;
 
   onXChange?: (diff: number) => void;
   onYChange?: (diff: number) => void;
@@ -54,13 +48,6 @@ export abstract class GameObject {
     this.z = 0;
 
     this.mouse = new MouseEventsList(this.containerHtml);
-
-    this.wsadControl = new WSADControl(this);
-    this.adControl = new ADControl(this);
-    this.jumpYControl = new JumpYControl(this);
-    this.dragAndDropControl = new DragAndDropControl(this);
-    this.followCursorOnMoveControl = new FollowCursorOnMoveControl(this);
-    this.followCursorOnClickControl = new FollowCursorOnClickControl(this);
 
     this.collision = false;
 
@@ -166,30 +153,6 @@ export abstract class GameObject {
     return this.gravityIntensity;
   }
 
-  getWsadControl() {
-    return this.wsadControl;
-  }
-
-  getAdControl() {
-    return this.adControl;
-  }
-
-  getJumpYControl() {
-    return this.jumpYControl;
-  }
-
-  getFollowCursorOnMoveControl() {
-    return this.followCursorOnMoveControl;
-  }
-
-  getFollowCursorOnClickControl() {
-    return this.followCursorOnClickControl;
-  }
-
-  getDragAndDropControl() {
-    return this.dragAndDropControl;
-  }
-
   setOnXChange(callback: (diff: number) => void) {
     this.onXChange = callback;
   }
@@ -287,5 +250,49 @@ export abstract class GameObject {
 
   requestJump() {
     return this.scene.requestJump(this);
+  }
+}
+
+export abstract class ControllableGameObject extends GameObject {
+  wsadControl: WSADControl;
+  adControl: ADControl;
+  jumpYControl: JumpYControl;
+  dragAndDropControl: DragAndDropControl;
+  followCursorOnMoveControl: FollowCursorOnMoveControl;
+  followCursorOnClickControl: FollowCursorOnClickControl;
+
+  constructor(scene: Scene, textureHtml: HTMLElement) {
+    super(scene, textureHtml);
+
+    this.wsadControl = new WSADControl(this);
+    this.adControl = new ADControl(this);
+    this.jumpYControl = new JumpYControl(this);
+    this.dragAndDropControl = new DragAndDropControl(this);
+    this.followCursorOnMoveControl = new FollowCursorOnMoveControl(this);
+    this.followCursorOnClickControl = new FollowCursorOnClickControl(this);
+  }
+
+  getWsadControl() {
+    return this.wsadControl;
+  }
+
+  getAdControl() {
+    return this.adControl;
+  }
+
+  getJumpYControl() {
+    return this.jumpYControl;
+  }
+
+  getFollowCursorOnMoveControl() {
+    return this.followCursorOnMoveControl;
+  }
+
+  getFollowCursorOnClickControl() {
+    return this.followCursorOnClickControl;
+  }
+
+  getDragAndDropControl() {
+    return this.dragAndDropControl;
   }
 }
