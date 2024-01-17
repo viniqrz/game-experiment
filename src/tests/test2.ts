@@ -121,7 +121,13 @@ export class Character extends ControllableGameObject {
 export class SecondScene extends Scene {
   constructor() {
     super();
-    this.setBackgroundColor("red");
+    this.setBackground(
+      `url("https://www.spectator.co.uk/wp-content/uploads/2023/02/2MX0PT8.jpg")`,
+      {
+        size: "cover",
+        attachment: "fixed",
+      }
+    );
   }
 }
 
@@ -135,16 +141,6 @@ export function init() {
   scene.setCamera(camera);
   scene.setClosedBorders(true);
   scene.setBackgroundColor("skyblue");
-
-  // const sphere = new Sphere(scene);
-  // sphere.displayOnScene(0, 0, 0);
-  // sphere.setGravity(true);
-  // sphere.setCollision(true);
-
-  // const sphere2 = new Sphere(scene);
-  // sphere2.displayOnScene(500, 300, 0);
-  // sphere2.setCollision(true);
-  // sphere2.setGravity(true);
 
   const mario = new Character(scene);
   mario.getJumpYControl().setActive(true);
@@ -165,12 +161,14 @@ export function init() {
     }
   })();
 
-  mario.onXChange = (diff) => {
-    if (diff > 0) {
-      const GAP = 10;
-      if (mario.getX() >= scene.getWidth() - mario.getWidth() - GAP) {
-        screen.setActiveScene(new SecondScene());
-      }
-    }
-  };
+  // mario.onXChange = (diff) => {
+  //   if (diff > 0) {
+  //     const GAP = 10;
+  //     if (mario.getX() >= scene.getWidth() - mario.getWidth() - GAP) {
+  //       screen.setActiveScene(new SecondScene());
+  //     }
+  //   }
+  // };
+
+  mario.onLeaveSceneRight = () => screen.setActiveScene(new SecondScene());
 }

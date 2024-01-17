@@ -209,30 +209,56 @@ export abstract class Scene {
     };
   }
 
+  isObjectWithinBorders(
+    actor: GameObject,
+    isPositive: boolean,
+    type: "X" | "Y"
+  ) {
+    const sceneBoundaries = this.getBoundaries();
+
+    if (type === "X") {
+      if (isPositive) {
+        if (actor.getX() + actor.getWidth() >= sceneBoundaries.right) {
+          if (actor.onLeaveSceneRight) actor.onLeaveSceneRight();
+          return false;
+        }
+      } else {
+        if (actor.getX() <= sceneBoundaries.left) {
+          if (actor.onLeaveSceneLeft) actor.onLeaveSceneLeft();
+
+          return false;
+        }
+      }
+    }
+
+    if (type === "Y") {
+      if (isPositive) {
+        if (actor.getY() + actor.getHeight() >= sceneBoundaries.bottom) {
+          if (actor.onLeaveSceneBottom) actor.onLeaveSceneBottom();
+
+          return false;
+        }
+      } else {
+        if (actor.getY() <= sceneBoundaries.top) {
+          if (actor.onLeaveSceneTop) actor.onLeaveSceneTop();
+
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   requestCoordinateUpdate(
     actor: GameObject,
     isPositive: boolean,
     type: "X" | "Y"
   ) {
     if (this.closedBorders) {
-      const sceneBoundaries = this.getBoundaries();
-
-      if (type === "X") {
-        if (isPositive) {
-          if (actor.getX() + actor.getWidth() > sceneBoundaries.right)
-            return false;
-        } else {
-          if (actor.getX() < sceneBoundaries.left) return false;
-        }
-      }
-
-      if (type === "Y") {
-        if (isPositive) {
-          if (actor.getY() + actor.getHeight() > sceneBoundaries.bottom)
-            return false;
-        } else {
-          if (actor.getY() < sceneBoundaries.top) return false;
-        }
+      if (!this.isObjectWithinBorders(actor, isPositive, type)) {
+        if (actor.onLeaveScene) actor.onLeaveScene();
+        return false;
       }
     }
 

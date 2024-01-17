@@ -25,6 +25,13 @@ export abstract class GameObject {
   onXChange?: (diff: number) => void;
   onYChange?: (diff: number) => void;
 
+  onLeaveScene?: () => void;
+
+  onLeaveSceneTop?: () => void;
+  onLeaveSceneBottom?: () => void;
+  onLeaveSceneRight?: () => void;
+  onLeaveSceneLeft?: () => void;
+
   static GAME_OBJECT_CLASS_NAME = "game-object-container";
 
   constructor(scene: Scene, textureHtml: HTMLElement) {

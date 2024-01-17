@@ -1,9 +1,11 @@
 import {
   Camera,
+  ControllableGameObject,
+  GameKeyboardEvent,
   GameKeyboardEventListener,
   GameObject,
   GameScreen,
-  KeyDownEvent,
+  KeyboardKey,
   Scene,
 } from "../api";
 
@@ -44,7 +46,7 @@ class MainScene extends Scene {
   }
 }
 
-class Sphere extends GameObject {
+class Sphere extends ControllableGameObject {
   constructor(scene: Scene) {
     const html = Sphere.generateHtml();
 
@@ -80,7 +82,8 @@ export function init() {
   sphere2.setCollision(true);
 
   const pressWToScare = new GameKeyboardEventListener(
-    new KeyDownEvent("w"),
+    GameKeyboardEvent.KEYDOWN,
+    KeyboardKey.W,
     () => {
       if (sphere.getY() > window.innerHeight * 2.5) {
         scene.scare();
