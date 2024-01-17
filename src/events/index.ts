@@ -1,11 +1,7 @@
-import { GameKeyboardEvent, KeyboardEventHtmlName } from "./keyboard";
+import { GameKeyboardEvent, KeyboardKey } from "./keyboard";
 import { GameMouseEvent, MouseEventHtmlName } from "./mouse";
 
-export abstract class GameEvent {
-  public static htmlName: KeyboardEventHtmlName | MouseEventHtmlName;
-
-  constructor(public htmlName: string) {}
-}
+export type GameEvent = GameKeyboardEvent | GameMouseEvent;
 
 abstract class GameEventListener<T> {
   constructor(
@@ -26,6 +22,7 @@ abstract class GameEventListener<T> {
 export class GameKeyboardEventListener extends GameEventListener<GameKeyboardEvent> {
   constructor(
     public event: GameKeyboardEvent,
+    public key: KeyboardKey,
     callback: Function,
     active = true
   ) {

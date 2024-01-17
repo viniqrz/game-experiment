@@ -1,12 +1,6 @@
 import { GameKeyboardEventListener, GameMouseEventListener } from "../events";
-import { KeyDownEvent, KeyUpEvent } from "../events/keyboard";
-import {
-  MouseDownEvent,
-  MouseEnterEvent,
-  MouseLeaveEvent,
-  MouseMoveEvent,
-  MouseUpEvent,
-} from "../events/mouse";
+import { GameKeyboardEvent, KeyboardKey } from "../events/keyboard";
+import { GameMouseEvent } from "../events/mouse";
 import { GameObject } from "../object";
 import { Spam } from "../spam";
 
@@ -109,7 +103,7 @@ export class DragAndDropControl extends Control {
 
   init() {
     const mouseMoveEventListener = new GameMouseEventListener(
-      new MouseMoveEvent(),
+      GameMouseEvent.MOVE,
       (e: MouseEvent) => {
         this.mouseX = e.clientX;
         this.mouseY = e.clientY;
@@ -128,7 +122,7 @@ export class DragAndDropControl extends Control {
     );
 
     const mouseDownEventListener = new GameMouseEventListener(
-      new MouseDownEvent(),
+      GameMouseEvent.DOWN,
       (e: MouseEvent) => {
         this.mouseDown = true;
         document.body.style.cursor = "grabbing";
@@ -136,7 +130,7 @@ export class DragAndDropControl extends Control {
     );
 
     const mouseUpEventListener = new GameMouseEventListener(
-      new MouseUpEvent(),
+      GameMouseEvent.UP,
       (e) => {
         this.mouseDown = false;
         document.body.style.cursor = "default";
@@ -144,7 +138,7 @@ export class DragAndDropControl extends Control {
     );
 
     const mouseEnterEventListener = new GameMouseEventListener(
-      new MouseEnterEvent(),
+      GameMouseEvent.ENTER,
       (e) => {
         if (this.mouseDown) return;
         document.body.style.cursor = "grab";
@@ -152,7 +146,7 @@ export class DragAndDropControl extends Control {
     );
 
     const mouseLeaveEventListener = new GameMouseEventListener(
-      new MouseLeaveEvent(),
+      GameMouseEvent.LEAVE,
       (e) => {
         if (this.mouseDown) return;
         document.body.style.cursor = "default";
@@ -284,7 +278,7 @@ export class FollowCursorOnClickControl extends AbstractFollowCursorControl {
 
   init() {
     const mouseDownEventListener = new GameMouseEventListener(
-      new MouseDownEvent(),
+      GameMouseEvent.DOWN,
       (e) => {
         this.mouseDown = !this.mouseDown;
         document.body.style.cursor = "grabbing";
@@ -292,7 +286,7 @@ export class FollowCursorOnClickControl extends AbstractFollowCursorControl {
     );
 
     const mouseEnterEventListener = new GameMouseEventListener(
-      new MouseEnterEvent(),
+      GameMouseEvent.ENTER,
       (e) => {
         if (this.mouseDown) return;
         document.body.style.cursor = "grab";
@@ -300,14 +294,14 @@ export class FollowCursorOnClickControl extends AbstractFollowCursorControl {
     );
 
     const mouseLeaveEventListener = new GameMouseEventListener(
-      new MouseLeaveEvent(),
+      GameMouseEvent.LEAVE,
       (e) => {
         if (this.mouseDown) return;
         document.body.style.cursor = "default";
       }
     );
     const objectFollowCursor = new GameMouseEventListener(
-      new MouseMoveEvent(),
+      GameMouseEvent.MOVE,
       (e: MouseEvent) => {
         this.lastCursorX = e.clientX;
         this.lastCursorY = e.clientY;
@@ -332,7 +326,7 @@ export class FollowCursorOnMoveControl extends AbstractFollowCursorControl {
 
   init() {
     const objectFollowCursor = new GameMouseEventListener(
-      new MouseMoveEvent(),
+      GameMouseEvent.MOVE,
       (e: MouseEvent) => {
         this.lastCursorX = e.clientX;
         this.lastCursorY = e.clientY;
@@ -377,7 +371,8 @@ export class JumpYControl extends Control {
 
   init() {
     const keydownEventListener = new GameKeyboardEventListener(
-      new KeyDownEvent(" "),
+      GameKeyboardEvent.KEYDOWN,
+      KeyboardKey.SPACE,
       () => this.handleJump()
     );
     this.appendEventListenerToScene(keydownEventListener);
@@ -453,7 +448,8 @@ export class ADControl extends Control {
 
   init() {
     const keyDownA = new GameKeyboardEventListener(
-      new KeyDownEvent("a"),
+      GameKeyboardEvent.KEYDOWN,
+      KeyboardKey.A,
       () => {
         this.isKeyAPressed = true;
         this.goLeftSpam.start();
@@ -462,7 +458,8 @@ export class ADControl extends Control {
     );
 
     const keyDownD = new GameKeyboardEventListener(
-      new KeyDownEvent("d"),
+      GameKeyboardEvent.KEYDOWN,
+      KeyboardKey.D,
       () => {
         this.isKeyDPressed = true;
         this.goRightSpam.start();
@@ -470,17 +467,25 @@ export class ADControl extends Control {
       }
     );
 
-    const keyUpA = new GameKeyboardEventListener(new KeyUpEvent("a"), () => {
-      this.goLeftSpam.stop();
-      this.isKeyAPressed = false;
-      if (!this.isKeyDPressed) this.setIsRunning(false);
-    });
+    const keyUpA = new GameKeyboardEventListener(
+      GameKeyboardEvent.KEYUP,
+      KeyboardKey.A,
+      () => {
+        this.goLeftSpam.stop();
+        this.isKeyAPressed = false;
+        if (!this.isKeyDPressed) this.setIsRunning(false);
+      }
+    );
 
-    const keyUpD = new GameKeyboardEventListener(new KeyUpEvent("d"), () => {
-      this.goRightSpam.stop();
-      this.isKeyDPressed = false;
-      if (!this.isKeyAPressed) this.setIsRunning(false);
-    });
+    const keyUpD = new GameKeyboardEventListener(
+      GameKeyboardEvent.KEYUP,
+      KeyboardKey.D,
+      () => {
+        this.goRightSpam.stop();
+        this.isKeyDPressed = false;
+        if (!this.isKeyAPressed) this.setIsRunning(false);
+      }
+    );
 
     this.appendEventListenerToScene(keyDownA);
     this.appendEventListenerToScene(keyDownD);
@@ -539,48 +544,68 @@ export class WSADControl extends Control {
 
   init() {
     const keyDownW = new GameKeyboardEventListener(
-      new KeyDownEvent("w"),
+      GameKeyboardEvent.KEYDOWN,
+      KeyboardKey.W,
       () => {
         this.goUpSpam.start();
       }
     );
 
     const keyDownS = new GameKeyboardEventListener(
-      new KeyDownEvent("s"),
+      GameKeyboardEvent.KEYDOWN,
+      KeyboardKey.S,
       () => {
         this.goDownSpam.start();
       }
     );
 
     const keyDownA = new GameKeyboardEventListener(
-      new KeyDownEvent("a"),
+      GameKeyboardEvent.KEYDOWN,
+      KeyboardKey.A,
       () => {
         this.goLeftSpam.start();
       }
     );
 
     const keyDownD = new GameKeyboardEventListener(
-      new KeyDownEvent("d"),
+      GameKeyboardEvent.KEYDOWN,
+      KeyboardKey.D,
       () => {
         this.goRightSpam.start();
       }
     );
 
-    const keyUpW = new GameKeyboardEventListener(new KeyUpEvent("w"), () => {
-      this.goUpSpam.stop();
-    });
+    const keyUpW = new GameKeyboardEventListener(
+      GameKeyboardEvent.KEYUP,
+      KeyboardKey.W,
+      () => {
+        this.goUpSpam.stop();
+      }
+    );
 
-    const keyUpS = new GameKeyboardEventListener(new KeyUpEvent("s"), () => {
-      this.goDownSpam.stop();
-    });
+    const keyUpS = new GameKeyboardEventListener(
+      GameKeyboardEvent.KEYUP,
+      KeyboardKey.S,
+      () => {
+        this.goDownSpam.stop();
+      }
+    );
 
-    const keyUpA = new GameKeyboardEventListener(new KeyUpEvent("a"), () => {
-      this.goLeftSpam.stop();
-    });
+    const keyUpA = new GameKeyboardEventListener(
+      GameKeyboardEvent.KEYUP,
+      KeyboardKey.A,
+      () => {
+        this.goLeftSpam.stop();
+      }
+    );
 
-    const keyUpD = new GameKeyboardEventListener(new KeyUpEvent("d"), () => {
-      this.goRightSpam.stop();
-    });
+    const keyUpD = new GameKeyboardEventListener(
+      GameKeyboardEvent.KEYUP,
+      KeyboardKey.D,
+      () => {
+        this.goRightSpam.stop();
+      }
+    );
 
     this.appendEventListenerToScene(keyDownW);
     this.appendEventListenerToScene(keyDownS);

@@ -1,24 +1,15 @@
-import { GameEvent, GameKeyboardEventListener, GameListenersList } from ".";
+import { GameKeyboardEventListener, GameListenersList } from ".";
 
-export type KeyboardKey = "w" | "s" | "a" | "d" | " ";
-export type KeyboardEventHtmlName = "keydown" | "keyup";
-
-export abstract class GameKeyboardEvent extends GameEvent {
-  constructor(public key: KeyboardKey, public htmlName: KeyboardEventHtmlName) {
-    super(htmlName);
-  }
+export enum KeyboardKey {
+  W = "w",
+  S = "s",
+  A = "a",
+  D = "d",
+  SPACE = " ",
 }
-
-export class KeyDownEvent extends GameKeyboardEvent {
-  constructor(key: KeyboardKey) {
-    super(key, "keydown");
-  }
-}
-
-export class KeyUpEvent extends GameKeyboardEvent {
-  constructor(key: KeyboardKey) {
-    super(key, "keyup");
-  }
+export enum GameKeyboardEvent {
+  KEYDOWN = "keydown",
+  KEYUP = "keyup",
 }
 
 export class KeyboardEventsList
@@ -26,12 +17,21 @@ export class KeyboardEventsList
 {
   private listeners: GameKeyboardEventListener[] = [];
   private callbacks: Map<
-    KeyboardEventHtmlName,
+    GameKeyboardEvent,
     Map<KeyboardKey, GameKeyboardEventListener[]>
   >;
 
-  static KeyboardEventHtmlNames: KeyboardEventHtmlName[] = ["keydown", "keyup"];
-  static KeyboardEventKeys: KeyboardKey[] = ["w", "s", "a", "d", " "];
+  static KeyboardEvents: GameKeyboardEvent[] = [
+    GameKeyboardEvent.KEYDOWN,
+    GameKeyboardEvent.KEYUP,
+  ];
+  static KeyboardEventKeys: KeyboardKey[] = [
+    KeyboardKey.W,
+    KeyboardKey.S,
+    KeyboardKey.A,
+    KeyboardKey.D,
+    KeyboardKey.SPACE,
+  ];
 
   constructor(
     private parentNode: HTMLElement,
@@ -58,7 +58,7 @@ export class KeyboardEventsList
   static generateCallbacksMap() {
     const map = new Map();
 
-    KeyboardEventsList.KeyboardEventHtmlNames.forEach((name) => {
+    KeyboardEventsList.KeyboardEvents.forEach((name) => {
       map.set(name, new Map());
 
       KeyboardEventsList.KeyboardEventKeys.forEach((key) => {
@@ -75,9 +75,6 @@ export class KeyboardEventsList
 
   addListener(listener: GameKeyboardEventListener) {
     this.listeners.push(listener);
-    this.callbacks
-      .get(listener.event.htmlName)!
-      .get(listener.event.key)!
-      .push(listener);
+    this.callbacks.get(listener.event)!.get(listener.key)!.push(listener);
   }
 }
