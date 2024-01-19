@@ -1,5 +1,5 @@
 import { Camera, GameObject, GameScreen, Scene } from "../api";
-import { ControllableGameObject } from "../object";
+import { ControllableGameObject, GameObjectEvent } from "../object";
 
 class MainScene extends Scene {
   constructor() {
@@ -145,7 +145,7 @@ export function init() {
   const mario = new Character(scene);
   mario.getJumpYControl().setActive(true);
   mario.getAdControl().setActive(true);
-  mario.displayOnScene(100, 100, 0);
+  mario.displayOnScene(10, 10, 0);
   mario.setCollision(true);
   mario.setGravity(true);
 
@@ -158,17 +158,14 @@ export function init() {
       const height = 32 * i;
       const grass = new GrassChunk(scene, 16, height - 32);
       platform.addChunk(grass);
+      if (i % 2 === 0) {
+        // grass.setWidth(0);
+        // grass.setCollision(false);
+      }
     }
   })();
 
-  // mario.onXChange = (diff) => {
-  //   if (diff > 0) {
-  //     const GAP = 10;
-  //     if (mario.getX() >= scene.getWidth() - mario.getWidth() - GAP) {
-  //       screen.setActiveScene(new SecondScene());
-  //     }
-  //   }
-  // };
-
-  mario.onLeaveSceneRight = () => screen.setActiveScene(new SecondScene());
+  mario.listen(GameObjectEvent.LEAVE_SCENE_RIGHT, () =>
+    screen.setActiveScene(new SecondScene())
+  );
 }

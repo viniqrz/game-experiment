@@ -9,6 +9,21 @@ import {
 import { MouseEventsList } from "../events/mouse";
 import { Scene } from "../scene";
 
+export enum GameObjectEvent {
+  X_CHANGE = "x_change",
+  Y_CHANGE = "y_change",
+  LEAVE_SCENE = "leave_scene",
+  LEAVE_SCENE_TOP = "leave_scene_top",
+  LEAVE_SCENE_BOTTOM = "leave_scene_bottom",
+  LEAVE_SCENE_RIGHT = "leave_scene_right",
+  LEAVE_SCENE_LEFT = "leave_scene_left",
+  COLLISION = "collision",
+  COLLISION_TOP = "collision_top",
+  COLLISION_BOTTOM = "collision_bottom",
+  COLLISION_RIGHT = "collision_right",
+  COLLISION_LEFT = "collision_left",
+}
+
 export abstract class GameObject {
   scene: Scene;
   mouse: MouseEventsList;
@@ -21,16 +36,9 @@ export abstract class GameObject {
   collision: boolean;
   gravity: boolean;
   gravityIntensity: number;
+  speed: number;
 
-  onXChange?: (diff: number) => void;
-  onYChange?: (diff: number) => void;
-
-  onLeaveScene?: () => void;
-
-  onLeaveSceneTop?: () => void;
-  onLeaveSceneBottom?: () => void;
-  onLeaveSceneRight?: () => void;
-  onLeaveSceneLeft?: () => void;
+  listeners: Map<GameObjectEvent, Array<Function>> = new Map();
 
   static GAME_OBJECT_CLASS_NAME = "game-object-container";
 
@@ -60,6 +68,27 @@ export abstract class GameObject {
 
     this.gravity = false;
     this.gravityIntensity = 1;
+    this.speed = 1;
+  }
+
+  emit(event: GameObjectEvent, payload: any) {
+    if (!this.listeners.has(event)) return;
+
+    for (const callback of this.listeners.get(event)!) {
+      callback(payload);
+    }
+  }
+
+  listen(event: GameObjectEvent, callback: Function) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+
+    this.listeners.get(event)!.push(callback);
+  }
+
+  setSpeed(speed: number) {
+    this.speed = speed;
   }
 
   checkIfHasCameraAttached() {
@@ -160,14 +189,6 @@ export abstract class GameObject {
     return this.gravityIntensity;
   }
 
-  setOnXChange(callback: (diff: number) => void) {
-    this.onXChange = callback;
-  }
-
-  setOnYChange(callback: (diff: number) => void) {
-    this.onYChange = callback;
-  }
-
   getX() {
     return this.x;
   }
@@ -182,13 +203,9 @@ export abstract class GameObject {
 
     this.getContainerHtml().style.left = `${x}px`;
 
-    this.notifyXChange(diff);
-
-    if (this.onXChange) this.onXChange(diff);
-  }
-
-  notifyXChange(diff: number) {
     this.scene.notifyXChange(this, diff);
+
+    this.emit(GameObjectEvent.X_CHANGE, diff);
   }
 
   getY() {
@@ -205,13 +222,9 @@ export abstract class GameObject {
 
     this.getContainerHtml().style.top = `${y}px`;
 
-    this.notifyYChange(diff);
-
-    if (this.onXChange) this.onXChange(diff);
-  }
-
-  notifyYChange(diff: number) {
     this.scene.notifyYChange(this, diff);
+
+    this.emit(GameObjectEvent.Y_CHANGE, diff);
   }
 
   setZ(z: number) {
@@ -240,11 +253,11 @@ export abstract class GameObject {
   }
 
   right(px = 1) {
-    this.setX(this.x + px);
+    this.setX(this.x + px * this.speed);
   }
 
   left(px = 1) {
-    this.setX(this.x - px);
+    this.setX(this.x - px * this.speed);
   }
 
   up(px = 1) {

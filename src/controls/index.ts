@@ -1,7 +1,7 @@
 import { GameKeyboardEventListener, GameMouseEventListener } from "../events";
 import { GameKeyboardEvent, KeyboardKey } from "../events/keyboard";
 import { GameMouseEvent } from "../events/mouse";
-import { GameObject } from "../object";
+import { GameObject, GameObjectEvent } from "../object";
 import { Spam } from "../spam";
 
 export class ControlEvent {
@@ -350,6 +350,7 @@ export class JumpYControl extends Control {
   maxJumps: number;
   duration: number;
   verticalStep: number;
+  isJumping: boolean = false;
 
   constructor(object: GameObject, active = false) {
     super(object, active);
@@ -366,16 +367,19 @@ export class JumpYControl extends Control {
       this.jump(this.verticalStep / 2);
     }, JumpYControl.INITIAL_SPAM_DELAY);
 
-    this.init();
-  }
-
-  init() {
     const keydownEventListener = new GameKeyboardEventListener(
       GameKeyboardEvent.KEYDOWN,
       KeyboardKey.SPACE,
       () => this.handleJump()
     );
     this.appendEventListenerToScene(keydownEventListener);
+
+    this.object.listen(GameObjectEvent.COLLISION_BOTTOM, () => {
+      if (this.isJumping) {
+        this.isJumping = false;
+        this.object.setSpeed(1);
+      }
+    });
   }
 
   async handleJump() {
@@ -388,6 +392,8 @@ export class JumpYControl extends Control {
 
   jump(step: number) {
     this.object.up(step);
+    this.object.setSpeed(0.5);
+    this.isJumping = true;
   }
 
   setDuration(duration: number) {

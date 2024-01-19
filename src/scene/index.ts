@@ -1,7 +1,7 @@
 import { Camera } from "../camera";
 import { KeyboardEventsList } from "../events/keyboard";
 import { MouseEventsList } from "../events/mouse";
-import { GameObject } from "../object";
+import { GameObject, GameObjectEvent } from "../object";
 import { Spam } from "../spam";
 
 export abstract class Scene {
@@ -38,7 +38,7 @@ export abstract class Scene {
 
     this.gravitySpam = new Spam(() => {
       this.ensureGravity();
-    }, 3);
+    }, 1);
     this.gravitySpam.start();
 
     this.camera = null;
@@ -219,12 +219,12 @@ export abstract class Scene {
     if (type === "X") {
       if (isPositive) {
         if (actor.getX() + actor.getWidth() >= sceneBoundaries.right) {
-          if (actor.onLeaveSceneRight) actor.onLeaveSceneRight();
+          actor.emit(GameObjectEvent.LEAVE_SCENE_RIGHT, null);
           return false;
         }
       } else {
         if (actor.getX() <= sceneBoundaries.left) {
-          if (actor.onLeaveSceneLeft) actor.onLeaveSceneLeft();
+          actor.emit(GameObjectEvent.LEAVE_SCENE_LEFT, null);
 
           return false;
         }
@@ -234,13 +234,13 @@ export abstract class Scene {
     if (type === "Y") {
       if (isPositive) {
         if (actor.getY() + actor.getHeight() >= sceneBoundaries.bottom) {
-          if (actor.onLeaveSceneBottom) actor.onLeaveSceneBottom();
+          actor.emit(GameObjectEvent.LEAVE_SCENE_BOTTOM, null);
 
           return false;
         }
       } else {
         if (actor.getY() <= sceneBoundaries.top) {
-          if (actor.onLeaveSceneTop) actor.onLeaveSceneTop();
+          actor.emit(GameObjectEvent.LEAVE_SCENE_TOP, null);
 
           return false;
         }
@@ -257,7 +257,7 @@ export abstract class Scene {
   ) {
     if (this.closedBorders) {
       if (!this.isObjectWithinBorders(actor, isPositive, type)) {
-        if (actor.onLeaveScene) actor.onLeaveScene();
+        actor.emit(GameObjectEvent.LEAVE_SCENE, null);
         return false;
       }
     }
@@ -281,14 +281,22 @@ export abstract class Scene {
         );
         if (!isThereYAxisOverlap) continue;
 
-        if (isPositive) {
-          if (actorBoundaries.left > objectBoundaries.left) continue;
-          if (actorBoundaries.right < objectBoundaries.left) continue;
+        if (
+          isPositive &&
+          actorBoundaries.right >= objectBoundaries.left &&
+          actorBoundaries.right <= objectBoundaries.right
+        ) {
+          actor.emit(GameObjectEvent.COLLISION, object);
+          actor.emit(GameObjectEvent.COLLISION_RIGHT, object);
 
           return false;
-        } else {
-          if (actorBoundaries.right < objectBoundaries.right) continue;
-          if (actorBoundaries.left > objectBoundaries.right) continue;
+        } else if (
+          !isPositive &&
+          actorBoundaries.left <= objectBoundaries.right &&
+          actorBoundaries.left >= objectBoundaries.left
+        ) {
+          actor.emit(GameObjectEvent.COLLISION, object);
+          actor.emit(GameObjectEvent.COLLISION_LEFT, object);
 
           return false;
         }
@@ -301,14 +309,22 @@ export abstract class Scene {
         );
         if (!isThereXAxisOverlap) continue;
 
-        if (isPositive) {
-          if (actorBoundaries.top > objectBoundaries.top) continue;
-          if (actorBoundaries.bottom < objectBoundaries.top) continue;
+        if (
+          isPositive &&
+          actorBoundaries.bottom >= objectBoundaries.top &&
+          actorBoundaries.bottom <= objectBoundaries.bottom
+        ) {
+          actor.emit(GameObjectEvent.COLLISION, object);
+          actor.emit(GameObjectEvent.COLLISION_BOTTOM, object);
 
           return false;
-        } else {
-          if (actorBoundaries.bottom < objectBoundaries.bottom) continue;
-          if (actorBoundaries.top > objectBoundaries.bottom) continue;
+        } else if (
+          !isPositive &&
+          actorBoundaries.top <= objectBoundaries.bottom &&
+          actorBoundaries.top >= objectBoundaries.top
+        ) {
+          actor.emit(GameObjectEvent.COLLISION, object);
+          actor.emit(GameObjectEvent.COLLISION_TOP, object);
 
           return false;
         }
