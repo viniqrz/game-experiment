@@ -34,9 +34,9 @@ export abstract class GameObject {
   y: number;
   z: number;
   collision: boolean;
+  speed: number;
   gravity: boolean;
   gravityIntensity: number;
-  speed: number;
 
   listeners: Map<GameObjectEvent, Array<Function>> = new Map();
 
@@ -193,11 +193,11 @@ export abstract class GameObject {
     return this.x;
   }
 
-  setX(x: number) {
+  setX(x: number): boolean {
     const diff = x - this.x;
     const isPositive = diff > 0;
     const allowed = this.scene.requestXUpdate(this, isPositive);
-    if (!allowed) return;
+    if (!allowed) return false;
 
     this.x = x;
 
@@ -206,17 +206,19 @@ export abstract class GameObject {
     this.scene.notifyXChange(this, diff);
 
     this.emit(GameObjectEvent.X_CHANGE, diff);
+
+    return true;
   }
 
   getY() {
     return this.y;
   }
 
-  setY(y: number) {
+  setY(y: number): boolean {
     const diff = y - this.y;
     const isPositive = diff > 0;
     const allowed = this.scene.requestYUpdate(this, isPositive);
-    if (!allowed) return;
+    if (!allowed) return false;
 
     this.y = y;
 
@@ -225,6 +227,8 @@ export abstract class GameObject {
     this.scene.notifyYChange(this, diff);
 
     this.emit(GameObjectEvent.Y_CHANGE, diff);
+
+    return true;
   }
 
   setZ(z: number) {
@@ -265,7 +269,7 @@ export abstract class GameObject {
   }
 
   down(px = 1) {
-    this.setY(this.y + px);
+    return this.setY(this.y + px);
   }
 
   requestJump() {

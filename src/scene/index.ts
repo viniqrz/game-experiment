@@ -281,23 +281,17 @@ export abstract class Scene {
         );
         if (!isThereYAxisOverlap) continue;
 
-        if (
-          isPositive &&
-          actorBoundaries.right >= objectBoundaries.left &&
-          actorBoundaries.right <= objectBoundaries.right
-        ) {
+        if (isPositive) {
+          if (actorBoundaries.left > objectBoundaries.left) continue;
+          if (actorBoundaries.right < objectBoundaries.left) continue;
           actor.emit(GameObjectEvent.COLLISION, object);
           actor.emit(GameObjectEvent.COLLISION_RIGHT, object);
-
           return false;
-        } else if (
-          !isPositive &&
-          actorBoundaries.left <= objectBoundaries.right &&
-          actorBoundaries.left >= objectBoundaries.left
-        ) {
+        } else {
+          if (actorBoundaries.right < objectBoundaries.right) continue;
+          if (actorBoundaries.left > objectBoundaries.right) continue;
           actor.emit(GameObjectEvent.COLLISION, object);
           actor.emit(GameObjectEvent.COLLISION_LEFT, object);
-
           return false;
         }
       }
@@ -309,23 +303,17 @@ export abstract class Scene {
         );
         if (!isThereXAxisOverlap) continue;
 
-        if (
-          isPositive &&
-          actorBoundaries.bottom >= objectBoundaries.top &&
-          actorBoundaries.bottom <= objectBoundaries.bottom
-        ) {
+        if (isPositive) {
+          if (actorBoundaries.top > objectBoundaries.top) continue;
+          if (actorBoundaries.bottom < objectBoundaries.top) continue;
           actor.emit(GameObjectEvent.COLLISION, object);
           actor.emit(GameObjectEvent.COLLISION_BOTTOM, object);
-
           return false;
-        } else if (
-          !isPositive &&
-          actorBoundaries.top <= objectBoundaries.bottom &&
-          actorBoundaries.top >= objectBoundaries.top
-        ) {
+        } else {
+          if (actorBoundaries.bottom < objectBoundaries.bottom) continue;
+          if (actorBoundaries.top > objectBoundaries.bottom) continue;
           actor.emit(GameObjectEvent.COLLISION, object);
           actor.emit(GameObjectEvent.COLLISION_TOP, object);
-
           return false;
         }
       }
