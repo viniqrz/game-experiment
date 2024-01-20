@@ -13,7 +13,8 @@ class MainScene extends Scene {
   scaring = false;
 
   constructor() {
-    super();
+    const camera = new Camera();
+    super(camera);
 
     this.setHeight(window.innerHeight * 3);
     this.setWidth(window.innerWidth * 3);
@@ -63,9 +64,6 @@ class Sphere extends ControllableGameObject {
 export function init() {
   const screen = new GameScreen();
   const scene = new MainScene();
-  const camera = new Camera();
-
-  scene.setCamera(camera);
 
   screen.setActiveScene(scene);
 
@@ -92,6 +90,5 @@ export function init() {
   );
 
   scene.keyboard.addListener(pressWToScare);
-
-  camera.setAttachedObject(sphere);
+  scene.getCamera().setAttachedObject(sphere);
 }

@@ -4,6 +4,7 @@ import {
   GameMouseEventListener,
   Scene,
   GameMouseEvent,
+  Camera,
 } from "../api";
 import { ControllableGameObject } from "../object";
 
@@ -45,7 +46,8 @@ class Bar extends GameObject {
 
 class MainScene extends Scene {
   constructor() {
-    super();
+    const camera = new Camera();
+    super(camera);
   }
 }
 

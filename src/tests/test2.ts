@@ -23,12 +23,14 @@ export class Character extends ControllableGameObject {
     const html = Character.generateHtml();
     super(scene, html);
     this.setWidth(32);
-    this.getAdControl().setOnPressA(() => {
-      this.textureHtml.style.transform = "rotateY(180deg)";
+
+    this.listen(GameObjectEvent.X_CHANGE, (diff: number) => {
+      this.rotateY(diff > 0 ? 0 : 180);
     });
-    this.getAdControl().setOnPressD(() => {
-      this.textureHtml.style.transform = "rotateY(0deg)";
-    });
+  }
+
+  rotateY(n: number) {
+    this.textureHtml.style.transform = `rotate(${n}deg)`;
   }
 
   static generateHtml() {
@@ -61,7 +63,6 @@ export function init() {
   const scene = new MainScene();
 
   screen.setActiveScene(scene);
-
   scene.setClosedBorders(true);
   scene.setBackgroundColor("skyblue");
 
@@ -72,10 +73,7 @@ export function init() {
   mario.setCollision(true);
   mario.setGravity(true);
 
-  const camera = new Camera();
-
-  scene.setCamera(camera);
-  scene.getCamera()?.setAttachedObject(mario);
+  scene.getCamera().setAttachedObject(mario);
 
   const platform = new Platform(scene);
 

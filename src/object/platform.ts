@@ -1,4 +1,5 @@
 import { GameObject } from ".";
+import { Exception } from "../exception";
 import { Scene } from "../scene";
 
 export class Platform {
@@ -9,15 +10,13 @@ export class Platform {
 
   addChunk(object: GameObject) {
     if (object.scene.ID !== this.scene.ID) {
-      throw new Error("Invalid scene");
+      throw new Exception("Invalid scene");
     }
     if (!object.getWidth()) {
-      alert("Object must have specified width");
-      throw new Error("Object must have specified width");
+      throw new Exception("Object must have specified width");
     }
     if (!object.getHeight()) {
-      alert("Object must have specified height");
-      throw new Error("Object must have specified height");
+      throw new Exception("Object must have specified height");
     }
     this.chunks.push(object);
 

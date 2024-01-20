@@ -22,7 +22,7 @@ export class ControlEventListener {
   constructor(public event: ControlEvent, public callback: Function) {}
 }
 
-export class Control {
+export abstract class Control {
   events: Array<GameKeyboardEventListener | GameMouseEventListener>;
   object: GameObject;
   active: boolean;

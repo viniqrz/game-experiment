@@ -53,10 +53,6 @@ export abstract class Scene {
     this.closedBorders = val;
   }
 
-  setCamera(camera: Camera) {
-    this.camera = camera;
-  }
-
   getCamera() {
     return this.camera;
   }
