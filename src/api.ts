@@ -1,4 +1,10 @@
-export { GameObject, ControllableGameObject } from "./object";
+export {
+  GameObject,
+  ControllableGameObject,
+  GrassChunk,
+  Platform,
+  GameObjectEvent,
+} from "./object";
 export { Scene } from "./scene";
 export { Camera } from "./camera";
 export { GameScreen } from "./screen";

@@ -1,5 +1,13 @@
-import { Camera, GameObject, GameScreen, Scene } from "../api";
-import { ControllableGameObject, GameObjectEvent } from "../object";
+import {
+  Camera,
+  GameObject,
+  GameScreen,
+  Scene,
+  ControllableGameObject,
+  Platform,
+  GrassChunk,
+  GameObjectEvent,
+} from "../api";
 
 class MainScene extends Scene {
   constructor() {
@@ -20,77 +28,6 @@ class Sphere extends GameObject {
     const html = document.createElement("div");
     html.classList.add("sphere");
     return html;
-  }
-}
-
-class GrassChunk extends GameObject {
-  constructor(scene: Scene, surfaceHeight = 16, dirtHeight = 96, width = 64) {
-    super(scene, GrassChunk.generateHtml(surfaceHeight, dirtHeight));
-    this.setWidth(width);
-    this.setHeight(surfaceHeight + dirtHeight);
-  }
-
-  static generateHtml(surfaceHeight: number, dirtHeight: number) {
-    const html = document.createElement("div");
-
-    const surface = document.createElement("div");
-    surface.style.background = "lime";
-    surface.style.height = `${surfaceHeight}px`;
-
-    html.appendChild(surface);
-
-    const terrain = document.createElement("div");
-    terrain.style.background = "rgb(126, 89, 71)";
-    terrain.style.height = `${dirtHeight}px`;
-
-    html.appendChild(terrain);
-
-    return html;
-  }
-}
-
-class Platform {
-  chunks: GameObject[] = [];
-  private width = 0;
-
-  constructor(public scene: Scene, public x = 0) {}
-
-  addChunk(object: GameObject) {
-    if (object.scene.ID !== this.scene.ID) {
-      throw new Error("Invalid scene");
-    }
-    if (!object.getWidth()) {
-      alert("Object must have specified width");
-      throw new Error("Object must have specified width");
-    }
-    if (!object.getHeight()) {
-      alert("Object must have specified height");
-      throw new Error("Object must have specified height");
-    }
-    this.chunks.push(object);
-
-    object.displayOnScene(
-      this.x + this.width,
-      this.scene.getHeight() - object.getHeight(),
-      0
-    );
-    object.setCollision(true);
-
-    this.width += object.getWidth();
-    if (this.width > this.scene.getWidth()) {
-      this.scene.setWidth(this.width);
-    }
-  }
-
-  setX(x: number) {
-    for (const chunk of this.chunks) {
-      chunk.right(x - this.x);
-    }
-    this.x = x;
-  }
-
-  getX() {
-    return this.x;
   }
 }
 
