@@ -30,7 +30,7 @@ export class Character extends ControllableGameObject {
   }
 
   rotateY(n: number) {
-    this.textureHtml.style.transform = `rotate(${n}deg)`;
+    this.textureHtml.style.transform = `rotateY(${n}deg)`;
   }
 
   static generateHtml() {

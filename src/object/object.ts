@@ -6,6 +6,7 @@ import {
   JumpYControl,
   WSADControl,
 } from "../controls";
+import { EventController } from "../events/controller";
 import { MouseEventsList } from "../events/mouse";
 import { Scene } from "../scene";
 
@@ -22,9 +23,10 @@ export enum GameObjectEvent {
   COLLISION_BOTTOM = "collision_bottom",
   COLLISION_RIGHT = "collision_right",
   COLLISION_LEFT = "collision_left",
+  TEXTURE_CHANGE = "texture_change",
 }
 
-export abstract class GameObject {
+export abstract class GameObject extends EventController<GameObjectEvent> {
   scene: Scene;
   mouse: MouseEventsList;
   containerHtml: HTMLElement;
@@ -38,11 +40,11 @@ export abstract class GameObject {
   gravity: boolean;
   gravityIntensity: number;
 
-  listeners: Map<GameObjectEvent, Array<Function>> = new Map();
-
   static GAME_OBJECT_CLASS_NAME = "game-object-container";
 
   constructor(scene: Scene, textureHtml: HTMLElement) {
+    super();
+
     this.ID = Math.random().toString().slice(2);
 
     this.containerHtml = document.createElement("div");
@@ -73,22 +75,6 @@ export abstract class GameObject {
 
   getScene() {
     return this.scene;
-  }
-
-  emit(event: GameObjectEvent, payload: any) {
-    if (!this.listeners.has(event)) return;
-
-    for (const callback of this.listeners.get(event)!) {
-      callback(payload);
-    }
-  }
-
-  listen(event: GameObjectEvent, callback: Function) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, []);
-    }
-
-    this.listeners.get(event)!.push(callback);
   }
 
   setSpeed(speed: number) {
@@ -150,12 +136,10 @@ export abstract class GameObject {
     return this.textureHtml;
   }
 
-  notifyTextureChange() {}
-
   updateTextureHtml(textureHtml: HTMLElement) {
     this.containerHtml.innerHTML = textureHtml.outerHTML;
     this.textureHtml = textureHtml;
-    this.notifyTextureChange();
+    this.emit(GameObjectEvent.TEXTURE_CHANGE, null);
   }
 
   getBoundaries() {

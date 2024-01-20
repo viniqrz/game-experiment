@@ -1,7 +1,13 @@
+import { EventController } from "../events/controller";
 import { Exception } from "../exception";
 import { GameObject } from "../object";
 
-export class Camera {
+export enum CameraEvent {
+  X_CHANGE,
+  Y_CHANGE,
+}
+
+export class Camera extends EventController<CameraEvent> {
   ID: string;
 
   constructor(
@@ -9,6 +15,7 @@ export class Camera {
     private y = 0,
     private attachedObject: GameObject | null = null
   ) {
+    super();
     this.ID = Math.random().toString().slice(2);
   }
 
