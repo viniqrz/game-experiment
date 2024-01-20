@@ -71,6 +71,10 @@ export abstract class GameObject {
     this.speed = 1;
   }
 
+  getScene() {
+    return this.scene;
+  }
+
   emit(event: GameObjectEvent, payload: any) {
     if (!this.listeners.has(event)) return;
 

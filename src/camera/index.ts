@@ -1,15 +1,16 @@
 import { Exception } from "../exception";
 import { GameObject } from "../object";
-import { Scene } from "../scene";
 
 export class Camera {
-  public scene?: Scene;
+  ID: string;
 
   constructor(
     private x = 0,
     private y = 0,
     private attachedObject: GameObject | null = null
-  ) {}
+  ) {
+    this.ID = Math.random().toString().slice(2);
+  }
 
   getAttachedObject() {
     return this.attachedObject;
@@ -48,12 +49,20 @@ export class Camera {
   }
 
   checkIfObjectIsInTheView(object: GameObject) {
-    if (object.scene !== this.scene) {
-      throw new Exception("Object should ");
+    if (this.ID !== object.getScene().getCamera().ID) {
+      throw new Exception(`Object's camera is not this camera`);
     }
 
-    const [objectX, objectY] = [object.getX(), object.getY()];
-    const [cameraX, cameraY] = [this.x, this.y];
+    const rangeX = [this.x, this.x + window.innerWidth];
+    const rangeY = [this.y, this.y + window.innerHeight];
+
+    const withinRange =
+      object.getX() >= rangeX[0] &&
+      object.getX() + object.getWidth() <= rangeX[1] &&
+      object.getY() >= rangeY[0] &&
+      object.getY() + object.getHeight() <= rangeY[1];
+
+    return withinRange;
   }
 
   checkIfObjectIsBeforeXAxisCenter(object: GameObject) {

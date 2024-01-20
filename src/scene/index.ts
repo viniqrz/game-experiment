@@ -9,12 +9,12 @@ export abstract class Scene {
   html: HTMLElement;
   mouse: MouseEventsList;
   keyboard: KeyboardEventsList;
-  camera: Camera | null;
+  camera: Camera;
   closedBorders: boolean;
   gravitySpam: Spam;
   ID: string;
 
-  constructor() {
+  constructor(camera: Camera) {
     this.ID = Math.random().toString().slice(2);
     this.objects = [];
 
@@ -41,8 +41,8 @@ export abstract class Scene {
     }, 1);
     this.gravitySpam.start();
 
-    this.camera = null;
     this.closedBorders = true;
+    this.camera = camera;
   }
 
   getClosedBorders() {

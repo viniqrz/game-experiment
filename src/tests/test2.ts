@@ -8,27 +8,13 @@ import {
   GrassChunk,
   GameObjectEvent,
 } from "../api";
-import { Exception } from "../exception";
 
 class MainScene extends Scene {
   constructor() {
-    super();
+    const camera = new Camera();
+    super(camera);
 
     this.setHeight(window.innerHeight);
-  }
-}
-
-class Sphere extends GameObject {
-  constructor(scene: Scene) {
-    const html = Sphere.generateHtml();
-
-    super(scene, html);
-  }
-
-  static generateHtml() {
-    const html = document.createElement("div");
-    html.classList.add("sphere");
-    return html;
   }
 }
 
@@ -58,7 +44,8 @@ export class Character extends ControllableGameObject {
 
 export class SecondScene extends Scene {
   constructor() {
-    super();
+    const camera = new Camera();
+    super(camera);
     this.setBackground(
       `url("https://www.spectator.co.uk/wp-content/uploads/2023/02/2MX0PT8.jpg")`,
       {
@@ -72,11 +59,9 @@ export class SecondScene extends Scene {
 export function init() {
   const screen = new GameScreen();
   const scene = new MainScene();
-  const camera = new Camera();
 
   screen.setActiveScene(scene);
 
-  scene.setCamera(camera);
   scene.setClosedBorders(true);
   scene.setBackgroundColor("skyblue");
 
@@ -87,6 +72,9 @@ export function init() {
   mario.setCollision(true);
   mario.setGravity(true);
 
+  const camera = new Camera();
+
+  scene.setCamera(camera);
   scene.getCamera()?.setAttachedObject(mario);
 
   const platform = new Platform(scene);
