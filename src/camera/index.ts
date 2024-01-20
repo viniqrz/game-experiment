@@ -1,6 +1,10 @@
+import { Exception } from "../exception";
 import { GameObject } from "../object";
+import { Scene } from "../scene";
 
 export class Camera {
+  public scene?: Scene;
+
   constructor(
     private x = 0,
     private y = 0,
@@ -41,6 +45,15 @@ export class Camera {
     if (y < 0 || y >= document.body.scrollHeight) return;
     this.y = y;
     window.scrollTo(this.x, this.y);
+  }
+
+  checkIfObjectIsInTheView(object: GameObject) {
+    if (object.scene !== this.scene) {
+      throw new Exception("Object should ");
+    }
+
+    const [objectX, objectY] = [object.getX(), object.getY()];
+    const [cameraX, cameraY] = [this.x, this.y];
   }
 
   checkIfObjectIsBeforeXAxisCenter(object: GameObject) {

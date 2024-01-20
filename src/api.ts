@@ -5,6 +5,7 @@ export {
   Platform,
   GameObjectEvent,
 } from "./object";
+
 export { Scene } from "./scene";
 export { Camera } from "./camera";
 export { GameScreen } from "./screen";

@@ -8,6 +8,7 @@ import {
   GrassChunk,
   GameObjectEvent,
 } from "../api";
+import { Exception } from "../exception";
 
 class MainScene extends Scene {
   constructor() {
@@ -88,19 +89,12 @@ export function init() {
 
   scene.getCamera()?.setAttachedObject(mario);
 
-  (() => {
-    const platform = new Platform(scene);
+  const platform = new Platform(scene);
 
-    for (let i = 1; i <= 10; i++) {
-      const height = 32 * i;
-      const grass = new GrassChunk(scene, 16, height - 32);
-      platform.addChunk(grass);
-      if (i % 2 === 0) {
-        // grass.setWidth(0);
-        // grass.setCollision(false);
-      }
-    }
-  })();
+  const height = 32 * 2;
+
+  const ground = new GrassChunk(scene, 16, height - 32, 256);
+  platform.addChunk(ground);
 
   mario.listen(GameObjectEvent.LEAVE_SCENE_RIGHT, () =>
     screen.setActiveScene(new SecondScene())
