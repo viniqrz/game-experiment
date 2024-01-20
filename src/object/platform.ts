@@ -6,7 +6,8 @@ import { Scene } from "../scene";
 export class Platform {
   chunks: GameObject[] = [];
   private width = 0;
-  private visibilityControlPadding = 256;
+  private visibilityControlPaddingX = 256;
+  private visibilityControlPaddingY = 256;
 
   constructor(public scene: Scene, public x = 0) {
     scene.getCamera().listen(CameraEvent.X_CHANGE, () => {
@@ -17,12 +18,20 @@ export class Platform {
     });
   }
 
-  setVisibilityControlPadding(n: number) {
-    this.visibilityControlPadding = n;
+  setVisibilityControlPaddingX(n: number) {
+    this.visibilityControlPaddingX = n;
   }
 
-  getVisibilityControlPadding() {
-    return this.visibilityControlPadding;
+  getVisibilityControlPaddingX() {
+    return this.visibilityControlPaddingX;
+  }
+
+  setVisibilityControlPaddingY(n: number) {
+    this.visibilityControlPaddingY = n;
+  }
+
+  getVisibilityControlPaddingY() {
+    return this.visibilityControlPaddingY;
   }
 
   controlChunksVisibility() {
@@ -30,7 +39,11 @@ export class Platform {
       if (
         this.getScene()
           .getCamera()
-          .checkIfObjectIsInTheView(chunk, this.getVisibilityControlPadding())
+          .checkIfObjectIsInTheView(
+            chunk,
+            this.getVisibilityControlPaddingX(),
+            this.getVisibilityControlPaddingY()
+          )
       ) {
         chunk.show();
       } else {
@@ -71,7 +84,15 @@ export class Platform {
       this.scene.setWidth(this.width);
     }
 
-    if (!this.scene.getCamera().checkIfObjectIsInTheView(object)) {
+    if (
+      !this.scene
+        .getCamera()
+        .checkIfObjectIsInTheView(
+          object,
+          this.getVisibilityControlPaddingX(),
+          this.getVisibilityControlPaddingY()
+        )
+    ) {
       object.hide();
     }
   }

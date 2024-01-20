@@ -70,16 +70,16 @@ export function init() {
   const mario = new Character(scene);
   mario.getJumpYControl().setActive(true);
   mario.getAdControl().setActive(true);
-  mario.displayOnScene(10, 10, 0);
+  mario.displayOnScene(scene.getWidth() / 2 - mario.getWidth(), 10, 0);
   mario.setCollision(true);
   mario.setGravity(true);
 
   scene.getCamera().setAttachedObject(mario);
 
   const platform = new Platform(scene);
-  platform.setVisibilityControlPadding(-64);
+  platform.setVisibilityControlPaddingX(-512);
 
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 30; i++) {
     const height = i % 2 === 0 ? 128 : 64;
     const ground = new GrassChunk(scene, 16, height, 256);
     platform.addChunk(ground);
