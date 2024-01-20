@@ -136,6 +136,20 @@ export abstract class GameObject extends EventController<GameObjectEvent> {
     return this.textureHtml;
   }
 
+  hide() {
+    this.containerHtml.innerHTML = "";
+    this.collision = false;
+  }
+
+  show() {
+    this.updateTextureHtml(this.textureHtml);
+    this.collision = true;
+  }
+
+  addToHtml() {
+    this.updateTextureHtml(this.textureHtml);
+  }
+
   updateTextureHtml(textureHtml: HTMLElement) {
     this.containerHtml.innerHTML = textureHtml.outerHTML;
     this.textureHtml = textureHtml;

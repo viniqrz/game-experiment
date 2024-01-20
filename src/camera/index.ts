@@ -37,6 +37,7 @@ export class Camera extends EventController<CameraEvent> {
 
   setX(x: number) {
     if (x < 0 || x >= document.body.scrollWidth) return;
+    this.emit(CameraEvent.X_CHANGE, x - this.x);
     this.x = x;
     window.scrollTo(this.x, this.y);
   }
@@ -51,11 +52,12 @@ export class Camera extends EventController<CameraEvent> {
 
   setY(y: number) {
     if (y < 0 || y >= document.body.scrollHeight) return;
+    this.emit(CameraEvent.Y_CHANGE, y - this.y);
     this.y = y;
     window.scrollTo(this.x, this.y);
   }
 
-  checkIfObjectIsInTheView(object: GameObject) {
+  checkIfObjectIsInTheView(object: GameObject, padding: number = 128) {
     if (this.ID !== object.getScene().getCamera().ID) {
       throw new Exception(`Object's camera is not this camera`);
     }
@@ -64,10 +66,10 @@ export class Camera extends EventController<CameraEvent> {
     const rangeY = [this.y, this.y + window.innerHeight];
 
     const withinRange =
-      object.getX() >= rangeX[0] &&
-      object.getX() + object.getWidth() <= rangeX[1] &&
-      object.getY() >= rangeY[0] &&
-      object.getY() + object.getHeight() <= rangeY[1];
+      object.getX() + object.getWidth() + padding >= rangeX[0] &&
+      object.getX() - padding <= rangeX[1] &&
+      object.getY() + object.getHeight() + padding >= rangeY[0] &&
+      object.getY() - padding < rangeY[1];
 
     return withinRange;
   }

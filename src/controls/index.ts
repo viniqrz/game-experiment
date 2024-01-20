@@ -392,7 +392,7 @@ export class JumpYControl extends Control {
 
   jump(step: number) {
     this.object.up(step);
-    this.object.setSpeed(0.5);
+    this.object.setSpeed(0.8);
     this.isJumping = true;
   }
 

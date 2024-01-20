@@ -7,7 +7,7 @@ export {
 } from "./object";
 
 export { Scene } from "./scene";
-export { Camera } from "./camera";
+export { Camera, CameraEvent } from "./camera";
 export { GameScreen } from "./screen";
 
 export { GameKeyboardEvent, KeyboardKey } from "./events/keyboard";

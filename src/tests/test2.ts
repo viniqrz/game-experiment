@@ -7,6 +7,7 @@ import {
   Platform,
   GrassChunk,
   GameObjectEvent,
+  CameraEvent,
 } from "../api";
 
 class MainScene extends Scene {
@@ -76,11 +77,13 @@ export function init() {
   scene.getCamera().setAttachedObject(mario);
 
   const platform = new Platform(scene);
+  platform.setVisibilityControlPadding(-64);
 
-  const height = 32 * 2;
-
-  const ground = new GrassChunk(scene, 16, height - 32, 256);
-  platform.addChunk(ground);
+  for (let i = 0; i < 50; i++) {
+    const height = i % 2 === 0 ? 128 : 64;
+    const ground = new GrassChunk(scene, 16, height, 256);
+    platform.addChunk(ground);
+  }
 
   mario.listen(GameObjectEvent.LEAVE_SCENE_RIGHT, () =>
     screen.setActiveScene(new SecondScene())
