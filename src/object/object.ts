@@ -278,7 +278,7 @@ export abstract class GameObject extends EventController<GameObjectEvent> {
   }
 
   up(px = 1) {
-    this.setY(this.y - px);
+    return this.setY(this.y - px);
   }
 
   down(px = 1) {

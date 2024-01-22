@@ -352,6 +352,8 @@ export class JumpYControl extends Control {
   verticalStep: number;
   isJumping: boolean = false;
 
+  _lastKnownSpeed: number | null = null;
+
   constructor(object: GameObject, active = false) {
     super(object, active);
 
@@ -377,7 +379,8 @@ export class JumpYControl extends Control {
     this.object.listen(GameObjectEvent.COLLISION_BOTTOM, () => {
       if (this.isJumping) {
         this.isJumping = false;
-        this.object.setSpeed(1);
+        this.object.setSpeed(this._lastKnownSpeed ? this._lastKnownSpeed : 1);
+        this._lastKnownSpeed = null;
       }
     });
   }
@@ -391,8 +394,10 @@ export class JumpYControl extends Control {
   }
 
   jump(step: number) {
-    this.object.up(step);
-    this.object.setSpeed(0.8);
+    const success = this.object.up(step);
+    if (!success) return;
+    if (!this._lastKnownSpeed) this._lastKnownSpeed = this.object.speed;
+    this.object.setSpeed(this._lastKnownSpeed * 0.8);
     this.isJumping = true;
   }
 

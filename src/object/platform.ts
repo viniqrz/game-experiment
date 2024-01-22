@@ -70,6 +70,12 @@ export class Platform {
     if (!object.getHeight()) {
       throw new Exception("Object must have specified height");
     }
+    if (!this.scene.getHeight()) {
+      throw new Exception("Scene must have specified height");
+    }
+    if (!this.scene.getWidth()) {
+      throw new Exception("Scene must have specified width");
+    }
     this.chunks.push(object);
 
     object.displayOnScene(

@@ -29,6 +29,10 @@ export class GameScreen {
     return html;
   }
 
+  shutdown() {
+    this.html.innerHTML = "";
+  }
+
   getScreenSize() {
     return { width: this.width, height: this.height };
   }

@@ -43,6 +43,7 @@ export abstract class Scene {
     });
 
     this.setWidth(window.innerWidth);
+    this.setHeight(window.innerHeight);
 
     this.gravitySpam = new Spam(() => {
       this.ensureGravity();
@@ -66,6 +67,7 @@ export abstract class Scene {
   }
 
   setWidth(width: number) {
+    if (width < window.innerWidth) return;
     this.html.style.width = `${width}px`;
   }
 
@@ -84,6 +86,7 @@ export abstract class Scene {
   }
 
   setHeight(height: number) {
+    if (height < window.innerHeight) return;
     this.html.style.height = `${height}px`;
   }
 
