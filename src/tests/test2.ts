@@ -151,9 +151,14 @@ export function init() {
   mario.listen(GameObjectEvent.LEAVE_SCENE_LEFT, () => {
     if (currentSceneIndex <= 0) return;
     currentSceneIndex--;
-    console.log(currentSceneIndex);
-    screen.setActiveScene(scenes[currentSceneIndex]);
-    scenes[currentSceneIndex].init(mario);
-    mario.switchScene(scenes[currentSceneIndex], 0, mario.getY() - 128, 0);
+    const activeScene = scenes[currentSceneIndex];
+    screen.setActiveScene(activeScene);
+    activeScene.init(mario);
+    mario.switchScene(
+      activeScene,
+      activeScene.getWidth() - mario.getWidth(),
+      mario.getY() - 128,
+      0
+    );
   });
 }
