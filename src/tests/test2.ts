@@ -8,6 +8,7 @@ import {
   GrassChunk,
   GameObjectEvent,
 } from "../api";
+import { Spam } from "../spam";
 
 class MainScene extends Scene {
   constructor() {
@@ -29,6 +30,11 @@ class MainScene extends Scene {
       const ground = new GrassChunk(this, 16, height, 256);
       platform.addChunk(ground);
     }
+
+    const bar = new Bar(this);
+
+    bar.displayOnScene(this.getWidth() / 2, this.getHeight() / 2, 0);
+    bar.setCollision(true);
   }
 }
 
@@ -88,6 +94,28 @@ export class NightScene extends Scene {
       platform.addChunk(ground);
       ground.getCollision();
     }
+  }
+}
+
+export class Bar extends GameObject {
+  spam: Spam;
+
+  constructor(scene: Scene) {
+    super(scene, Bar.generateHtml());
+
+    this.spam = new Spam(() => {
+      this.left();
+    }, 1);
+
+    this.spam.start();
+  }
+
+  static generateHtml() {
+    const html = document.createElement("div");
+    html.style.width = 200 + "px";
+    html.style.height = 24 + "px";
+    html.style.background = "#2f17cf";
+    return html;
   }
 }
 
