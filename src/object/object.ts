@@ -123,6 +123,13 @@ export abstract class GameObject extends EventController<GameObjectEvent> {
     this.textureHtml.style.height = `${height}px`;
   }
 
+  switchScene(scene: Scene, initX = 0, initY = 0, initZ = 0) {
+    this.scene.removeObject(this);
+    this.scene = scene;
+    this.scene.addObject(this);
+    this.setXYZ(initX, initY, initZ);
+  }
+
   displayOnScene(initX = 0, initY = 0, initZ = 0) {
     this.scene.addObject(this);
     this.setXYZ(initX, initY, initZ);
@@ -231,6 +238,10 @@ export abstract class GameObject extends EventController<GameObjectEvent> {
     this.emit(GameObjectEvent.Y_CHANGE, diff);
 
     return true;
+  }
+
+  getZ() {
+    return this.z;
   }
 
   setZ(z: number) {

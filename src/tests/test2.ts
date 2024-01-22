@@ -7,7 +7,6 @@ import {
   Platform,
   GrassChunk,
   GameObjectEvent,
-  CameraEvent,
 } from "../api";
 
 class MainScene extends Scene {
@@ -17,13 +16,78 @@ class MainScene extends Scene {
 
     this.setHeight(window.innerHeight);
   }
+
+  init() {
+    this.setClosedBorders(true);
+    this.setBackgroundColor("skyblue");
+
+    const mario = new Character(this);
+
+    mario.displayOnScene(this.getWidth() / 2 - mario.getWidth(), 10, 0);
+
+    this.getCamera().setAttachedObject(mario);
+
+    const platform = new Platform(this);
+
+    for (let i = 0; i < 8; i++) {
+      const height = i % 2 === 0 ? 128 : 64;
+      const ground = new GrassChunk(this, 16, height, 256);
+      platform.addChunk(ground);
+    }
+
+    const secondScene = new SecondScene(mario);
+
+    mario.listen(GameObjectEvent.LEAVE_SCENE_RIGHT, () => {
+      this.screen.setActiveScene(secondScene);
+      mario.switchScene(secondScene, 0, mario.getY(), 0);
+    });
+  }
+}
+
+export class NetherChunk extends GameObject {
+  constructor(scene: Scene, height = 128, width = 128) {
+    super(scene, NetherChunk.generateHtml(height, width));
+  }
+
+  static generateHtml(height: number, width: number) {
+    const html = document.createElement("div");
+
+    html.style.background = "#4a2615";
+    html.style.height = height + "px";
+    html.style.width = width + "px";
+
+    return html;
+  }
+}
+
+export class SecondScene extends Scene {
+  constructor(char: Character) {
+    const camera = new Camera();
+    super(camera);
+    this.setClosedBorders(true);
+    this.getCamera().setAttachedObject(char);
+    this.setBackground("#a85832");
+
+    const platform = new Platform(this);
+
+    for (let i = 0; i < 8; i++) {
+      const height = i % 2 === 0 ? 128 : 64;
+      const ground = new NetherChunk(this, height, 128);
+      platform.addChunk(ground);
+    }
+  }
 }
 
 export class Character extends ControllableGameObject {
   constructor(scene: Scene) {
     const html = Character.generateHtml();
     super(scene, html);
+
     this.setWidth(32);
+    this.getJumpYControl().setActive(true);
+    this.getAdControl().setActive(true);
+    this.setCollision(true);
+    this.setGravity(true);
 
     this.listen(GameObjectEvent.X_CHANGE, (diff: number) => {
       this.rotateY(diff > 0 ? 0 : 180);
@@ -45,47 +109,11 @@ export class Character extends ControllableGameObject {
   }
 }
 
-export class SecondScene extends Scene {
-  constructor() {
-    const camera = new Camera();
-    super(camera);
-    this.setBackground(
-      `url("https://www.spectator.co.uk/wp-content/uploads/2023/02/2MX0PT8.jpg")`,
-      {
-        size: "cover",
-        attachment: "fixed",
-      }
-    );
-  }
-}
-
 export function init() {
   const screen = new GameScreen();
   const scene = new MainScene();
 
   screen.setActiveScene(scene);
-  scene.setClosedBorders(true);
-  scene.setBackgroundColor("skyblue");
 
-  const mario = new Character(scene);
-  mario.getJumpYControl().setActive(true);
-  mario.getAdControl().setActive(true);
-  mario.displayOnScene(scene.getWidth() / 2 - mario.getWidth(), 10, 0);
-  mario.setCollision(true);
-  mario.setGravity(true);
-
-  scene.getCamera().setAttachedObject(mario);
-
-  const platform = new Platform(scene);
-  platform.setVisibilityControlPaddingX(-512);
-
-  for (let i = 0; i < 30; i++) {
-    const height = i % 2 === 0 ? 128 : 64;
-    const ground = new GrassChunk(scene, 16, height, 256);
-    platform.addChunk(ground);
-  }
-
-  mario.listen(GameObjectEvent.LEAVE_SCENE_RIGHT, () =>
-    screen.setActiveScene(new SecondScene())
-  );
+  scene.init();
 }

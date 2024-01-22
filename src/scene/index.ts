@@ -1,7 +1,9 @@
 import { Camera } from "../camera";
 import { KeyboardEventsList } from "../events/keyboard";
 import { MouseEventsList } from "../events/mouse";
+import { Exception } from "../exception";
 import { GameObject, GameObjectEvent } from "../object";
+import { GameScreen } from "../screen";
 import { Spam } from "../spam";
 
 export abstract class Scene {
@@ -13,8 +15,14 @@ export abstract class Scene {
   closedBorders: boolean;
   gravitySpam: Spam;
   ID: string;
+  //@ts-ignore
+  screen: GameScreen = window.gameScreen;
 
   constructor(camera: Camera) {
+    if (!this.screen) {
+      throw new Exception("A screen instance must be initialized");
+    }
+
     this.ID = Math.random().toString().slice(2);
     this.objects = [];
 
@@ -129,8 +137,16 @@ export abstract class Scene {
   }
 
   addObject(gameObject: GameObject) {
+    if (this.objects.find((object) => object.ID === gameObject.ID)) return;
     this.objects.push(gameObject);
     this.html.appendChild(gameObject.getContainerHtml());
+  }
+
+  removeObject(gameObject: GameObject) {
+    this.objects = this.objects.filter((object) => object.ID !== gameObject.ID);
+    try {
+      this.html.removeChild(gameObject.getContainerHtml());
+    } catch (err) {}
   }
 
   getHtml() {
