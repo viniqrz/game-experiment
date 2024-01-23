@@ -11,17 +11,17 @@ import {
 import { Spam } from "../spam";
 
 class MainScene extends Scene {
+  public isReady = false;
+
   constructor() {
     const camera = new Camera();
     super(camera);
   }
 
-  init(char: Character) {
+  init() {
+    if (this.isReady) return;
     this.setClosedBorders(true);
     this.setBackgroundColor("skyblue");
-
-    char.displayOnScene(this.getWidth() / 2 - char.getWidth(), 10, 0);
-    this.getCamera().setAttachedObject(char);
 
     const platform = new Platform(this);
 
@@ -35,6 +35,8 @@ class MainScene extends Scene {
 
     bar.displayOnScene(this.getWidth() / 2, this.getHeight() / 2, 0);
     bar.setCollision(true);
+
+    this.isReady = true;
   }
 }
 
@@ -55,12 +57,15 @@ export class NetherChunk extends GameObject {
 }
 
 export class SecondScene extends Scene {
+  isReady = false;
+
   constructor() {
     const camera = new Camera();
     super(camera);
   }
 
   init(char: Character) {
+    if (this.isReady) return;
     this.setClosedBorders(true);
     this.getCamera().setAttachedObject(char);
     this.setBackground("#a85832");
@@ -73,15 +78,20 @@ export class SecondScene extends Scene {
       platform.addChunk(ground);
       ground.getCollision();
     }
+
+    this.isReady = true;
   }
 }
 
 export class NightScene extends Scene {
+  isReady = false;
+
   constructor() {
     super(new Camera());
   }
 
   init(char: Character) {
+    if (this.isReady) return;
     this.setClosedBorders(true);
     this.getCamera().setAttachedObject(char);
     this.setBackground("#2f17cf");
@@ -94,6 +104,7 @@ export class NightScene extends Scene {
       platform.addChunk(ground);
       ground.getCollision();
     }
+    this.isReady = true;
   }
 }
 
@@ -120,13 +131,13 @@ export class Bar extends GameObject {
 }
 
 export class Character extends ControllableGameObject {
-  constructor(scene: Scene) {
-    const html = Character.generateHtml();
+  constructor(scene: Scene, type: "mario" | "ghost", isMainCharacter = false) {
+    const html = Character.generateHtml(type);
     super(scene, html);
 
     this.setWidth(32);
-    this.getJumpYControl().setActive(true);
-    this.getAdControl().setActive(true);
+    this.getJumpYControl().setActive(isMainCharacter);
+    this.getAdControl().setActive(isMainCharacter);
     this.setCollision(true);
     this.setGravity(true);
 
@@ -139,9 +150,9 @@ export class Character extends ControllableGameObject {
     this.textureHtml.style.transform = `rotateY(${n}deg)`;
   }
 
-  static generateHtml() {
+  static generateHtml(type: "mario" | "ghost") {
     const html = document.createElement("div");
-    const IMG = "mario.png";
+    const IMG = type + ".png";
     const img = document.createElement("img");
     img.style.width = "100%";
     img.src = IMG;
@@ -157,7 +168,8 @@ export function init() {
   const secondScene = new SecondScene();
   const nightScene = new NightScene();
 
-  const mario = new Character(mainScene);
+  const mario = new Character(mainScene, "mario", true);
+  const ghost = new Character(mainScene, "ghost");
 
   const scenes = [mainScene, secondScene, nightScene];
 
@@ -166,7 +178,16 @@ export function init() {
   screen.setActiveScene(scenes[currentSceneIndex]);
   scenes[currentSceneIndex].init(mario);
 
-  mario.setSpeed(3);
+  mario.displayOnScene(mainScene.getWidth() / 2 - mario.getWidth(), 10, 0);
+  mainScene.getCamera().setAttachedObject(mario);
+
+  ghost.displayOnScene(
+    (mainScene.getWidth() * 3) / 4 - ghost.getWidth(),
+    10,
+    0
+  );
+
+  // mario.setSpeed(3);
 
   mario.listen(GameObjectEvent.LEAVE_SCENE_RIGHT, () => {
     if (currentSceneIndex >= scenes.length - 1) return;

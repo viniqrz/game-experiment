@@ -25,6 +25,11 @@ export class Camera extends EventController<CameraEvent> {
 
   setAttachedObject(obj: GameObject | null) {
     this.attachedObject = obj;
+
+    if (!obj) return;
+
+    this.setX(obj.getX() + obj.getWidth() / 2 - window.innerWidth / 2);
+    this.setY(obj.getY() + obj.getHeight() / 2 - window.innerHeight / 2);
   }
 
   getX() {
