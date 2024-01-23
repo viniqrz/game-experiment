@@ -24,10 +24,11 @@ class MainScene extends Scene {
     this.setBackgroundColor("skyblue");
 
     const platform = new Platform(this);
+    platform.setShouldLimitVisibility(false);
 
-    for (let i = 0; i < 8; i++) {
-      const height = i % 2 === 0 ? 128 : 64;
-      const ground = new GrassChunk(this, 16, height, 256);
+    for (let i = 0; i < 4; i++) {
+      const height = 128 + i * 32;
+      const ground = new GrassChunk(this, 16, height, this.getWidth() / 4);
       platform.addChunk(ground);
     }
 
@@ -71,12 +72,12 @@ export class SecondScene extends Scene {
     this.setBackground("#a85832");
 
     const platform = new Platform(this);
+    // platform.setShouldLimitVisibility(false);
 
-    for (let i = 0; i < 8; i++) {
-      const height = i % 2 === 0 ? 128 : 64;
-      const ground = new NetherChunk(this, height, 128);
+    for (let i = 0; i < 4; i++) {
+      const height = 128 + i * 32;
+      const ground = new NetherChunk(this, height, this.getWidth() / 4);
       platform.addChunk(ground);
-      ground.getCollision();
     }
 
     this.isReady = true;
@@ -97,12 +98,12 @@ export class NightScene extends Scene {
     this.setBackground("#2f17cf");
 
     const platform = new Platform(this);
+    platform.setShouldLimitVisibility(false);
 
-    for (let i = 0; i < 8; i++) {
-      const height = i % 2 === 0 ? 128 : 64;
-      const ground = new NetherChunk(this, height, 128);
+    for (let i = 0; i < 4; i++) {
+      const height = 128 + i * 32;
+      const ground = new NetherChunk(this, height, this.getWidth() / 4);
       platform.addChunk(ground);
-      ground.getCollision();
     }
     this.isReady = true;
   }

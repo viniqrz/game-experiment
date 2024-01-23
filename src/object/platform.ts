@@ -6,43 +6,53 @@ import { Scene } from "../scene";
 export class Platform {
   chunks: GameObject[] = [];
   private width = 0;
-  private visibilityControlPaddingX = 256;
-  private visibilityControlPaddingY = 256;
+  private visibilityLimitPaddingX = 256;
+  private visibilityLimitPaddingY = 256;
+  private shouldLimitVisibility = true;
 
   constructor(public scene: Scene, public x = 0) {
     scene.getCamera().listen(CameraEvent.X_CHANGE, () => {
-      this.controlChunksVisibility();
+      this.limitChunksVisibility();
     });
     scene.getCamera().listen(CameraEvent.Y_CHANGE, () => {
-      this.controlChunksVisibility();
+      this.limitChunksVisibility();
     });
   }
 
-  setVisibilityControlPaddingX(n: number) {
-    this.visibilityControlPaddingX = n;
+  setShouldLimitVisibility(b: boolean) {
+    this.shouldLimitVisibility = b;
   }
 
-  getVisibilityControlPaddingX() {
-    return this.visibilityControlPaddingX;
+  getShouldLimitVisibility() {
+    return this.shouldLimitVisibility;
   }
 
-  setVisibilityControlPaddingY(n: number) {
-    this.visibilityControlPaddingY = n;
+  setvisibilityLimitPaddingX(n: number) {
+    this.visibilityLimitPaddingX = n;
   }
 
-  getVisibilityControlPaddingY() {
-    return this.visibilityControlPaddingY;
+  getvisibilityLimitPaddingX() {
+    return this.visibilityLimitPaddingX;
   }
 
-  controlChunksVisibility() {
+  setvisibilityLimitPaddingY(n: number) {
+    this.visibilityLimitPaddingY = n;
+  }
+
+  getvisibilityLimitPaddingY() {
+    return this.visibilityLimitPaddingY;
+  }
+
+  limitChunksVisibility() {
+    if (!this.shouldLimitVisibility) return;
     for (const chunk of this.getChunks()) {
       if (
         this.getScene()
           .getCamera()
           .checkIfObjectIsInTheView(
             chunk,
-            this.getVisibilityControlPaddingX(),
-            this.getVisibilityControlPaddingY()
+            this.getvisibilityLimitPaddingX(),
+            this.getvisibilityLimitPaddingY()
           )
       ) {
         chunk.show();
@@ -77,7 +87,6 @@ export class Platform {
       throw new Exception("Scene must have specified width");
     }
     this.chunks.push(object);
-
     object.displayOnScene(
       this.x + this.width,
       this.scene.getHeight() - object.getHeight(),
@@ -91,12 +100,13 @@ export class Platform {
     }
 
     if (
+      this.shouldLimitVisibility &&
       !this.scene
         .getCamera()
         .checkIfObjectIsInTheView(
           object,
-          this.getVisibilityControlPaddingX(),
-          this.getVisibilityControlPaddingY()
+          this.getvisibilityLimitPaddingX(),
+          this.getvisibilityLimitPaddingY()
         )
     ) {
       object.hide();

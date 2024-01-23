@@ -28,8 +28,19 @@ export class Camera extends EventController<CameraEvent> {
 
     if (!obj) return;
 
-    this.setX(obj.getX() + obj.getWidth() / 2 - window.innerWidth / 2);
-    this.setY(obj.getY() + obj.getHeight() / 2 - window.innerHeight / 2);
+    if (
+      obj.getScene().getWidth() > window.innerWidth &&
+      this.checkIfObjectIsAfterXAxisCenter(obj)
+    ) {
+      this.setX(obj.getX() + obj.getWidth() / 2 - window.innerWidth / 2);
+    }
+
+    if (
+      obj.getScene().getHeight() > window.innerHeight &&
+      this.checkIfObjectIsAfterYAxisCenter(obj)
+    ) {
+      this.setY(obj.getY() + obj.getHeight() / 2 - window.innerHeight / 2);
+    }
   }
 
   getX() {
@@ -73,6 +84,8 @@ export class Camera extends EventController<CameraEvent> {
 
     const rangeX = [this.x, this.x + window.innerWidth];
     const rangeY = [this.y, this.y + window.innerHeight];
+
+    console.log(rangeX, rangeY, [object.getX(), object.getY()]);
 
     const withinRange =
       object.getX() + object.getWidth() + paddingX >= rangeX[0] &&
